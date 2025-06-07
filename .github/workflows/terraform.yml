@@ -1,0 +1,232 @@
+name: "Terraform Deployment"
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "**.tf"
+      - ".github/workflows/terraform.yml"
+  pull_request:
+    branches: [main]
+    paths:
+      - "**.tf"
+      - ".github/workflows/terraform.yml"
+  workflow_dispatch: # Allow manual triggering
+
+permissions:
+  contents: read
+  pull-requests: write
+  id-token: write # Required for OIDC authentication with AWS
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  terraform:
+    name: "Terraform"
+    runs-on: ubuntu-latest
+
+    env:
+      # Environment configuration
+      ENVIRONMENT: "prod"  # Change to 'dev' or 'staging' for other environments
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: "1.7.0"
+          terraform_wrapper: false # Important for proper plan output parsing
+
+      # Configure AWS credentials using OIDC - single credential step
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::600424110307:role/GithubActionsOIDCTerraformRole
+          aws-region: us-east-1
+          role-session-name: GithubActionsOIDCSession
+
+      - name: Verify State File Location
+        run: |
+          echo "=== Checking existing state file location ==="
+          STATE_BUCKET="synepho-terraform-state"
+          STATE_KEY="synepho-com/terraform.tfstate"
+          
+          echo "Environment: $ENVIRONMENT"
+          echo "Looking for state file at: $STATE_BUCKET/$STATE_KEY"
+
+          if aws s3api head-object --bucket $STATE_BUCKET --key $STATE_KEY 2>/dev/null; then
+            echo "✅ Found existing state file at $STATE_BUCKET/$STATE_KEY"
+            echo "State file metadata:"
+            aws s3api head-object --bucket $STATE_BUCKET --key $STATE_KEY --query '{LastModified:LastModified,ContentLength:ContentLength}'
+          else
+            echo "❌ No state file found at $STATE_BUCKET/$STATE_KEY"
+          fi
+
+          echo -e "\n=== Listing all state files in bucket ==="
+          aws s3 ls s3://$STATE_BUCKET --recursive | grep terraform.tfstate || echo "No state files found"
+
+      - name: Create Terraform State Infrastructure
+        run: |
+          # Use same state infrastructure as local development
+          STATE_BUCKET="synepho-terraform-state"
+          LOCK_TABLE="terraform-locks"
+          
+          # Check and Create S3 Bucket for state
+          if ! aws s3api head-bucket --bucket $STATE_BUCKET 2>/dev/null; then
+            echo "Creating Terraform state bucket: $STATE_BUCKET"
+            aws s3 mb s3://$STATE_BUCKET --region us-east-1
+            
+            # Enable versioning for state recovery
+            aws s3api put-bucket-versioning \
+              --bucket $STATE_BUCKET \
+              --versioning-configuration Status=Enabled
+              
+            # Add encryption for security
+            aws s3api put-bucket-encryption \
+              --bucket $STATE_BUCKET \
+              --server-side-encryption-configuration '{"Rules": [{"ApplyServerSideEncryptionByDefault": {"SSEAlgorithm": "AES256"}}]}'
+              
+            # Block public access
+            aws s3api put-public-access-block \
+              --bucket $STATE_BUCKET \
+              --public-access-block-configuration "BlockPublicAcls=true,IgnorePublicAcls=true,BlockPublicPolicy=true,RestrictPublicBuckets=true"
+          else
+            echo "Terraform state bucket $STATE_BUCKET already exists."
+          fi
+          
+          # Check and Create DynamoDB table for state locking
+          if ! aws dynamodb describe-table --table-name $LOCK_TABLE --region us-east-1 2>/dev/null; then
+            echo "Creating DynamoDB table for state locking: $LOCK_TABLE"
+            aws dynamodb create-table \
+              --table-name $LOCK_TABLE \
+              --attribute-definitions AttributeName=LockID,AttributeType=S \
+              --key-schema AttributeName=LockID,KeyType=HASH \
+              --provisioned-throughput ReadCapacityUnits=5,WriteCapacityUnits=5 \
+              --region us-east-1
+              
+            # Wait for table to be active
+            echo "Waiting for DynamoDB table to be active..."
+            aws dynamodb wait table-exists --table-name $LOCK_TABLE --region us-east-1 || echo "Wait command failed, but table may still be created"
+          else
+            echo "DynamoDB table $LOCK_TABLE already exists."
+          fi
+
+      - name: Terraform Format Check
+        id: fmt
+        run: terraform fmt -check -recursive
+        continue-on-error: true
+
+      - name: Terraform Init
+        id: init
+        env:
+          ENVIRONMENT: ${{ env.ENVIRONMENT }}
+        run: |
+          echo "Initializing Terraform with environment-specific backend configuration..."
+          echo "Environment: $ENVIRONMENT"
+          terraform init -backend-config=environments/${ENVIRONMENT}/backend.conf
+
+      - name: Verify State After Init
+        run: |
+          echo "=== Verifying state configuration ==="
+          if [ -f .terraform/terraform.tfstate ]; then
+            cat .terraform/terraform.tfstate | jq '.backend.config' || echo "Failed to parse backend config"
+          else
+            echo "Backend state file not found"
+          fi
+
+          echo -e "\n=== Current resources in state ==="
+          terraform state list || echo "No resources in state"
+
+      - name: Terraform Validate
+        id: validate
+        run: terraform validate
+
+      - name: Terraform Plan
+        id: plan
+        env:
+          ENVIRONMENT: ${{ env.ENVIRONMENT }}
+        run: |
+          echo "Running Terraform plan for environment: $ENVIRONMENT"
+          terraform plan \
+            -var-file=environments/${ENVIRONMENT}/terraform.tfvars \
+            -input=false \
+            -no-color \
+            -out=tfplan
+        continue-on-error: true
+
+      - name: Upload Terraform Plan Artifact
+        if: github.event_name == 'pull_request'
+        uses: actions/upload-artifact@v4
+        with:
+          name: tfplan
+          path: tfplan
+          retention-days: 7
+
+      - name: Update PR with Plan Results
+        uses: actions/github-script@v7
+        if: github.event_name == 'pull_request'
+        env:
+          PLAN_EXIT_CODE: ${{ steps.plan.outcome }}
+          PLAN_OUTPUT: ${{ steps.plan.outputs.stdout }}
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const output = `#### Terraform Format and Style 🖌\`${{ steps.fmt.outcome }}\`
+            #### Terraform Initialization ⚙️\`${{ steps.init.outcome }}\`
+            #### Terraform Validation 🤖\`${{ steps.validate.outcome }}\`
+            #### Terraform Plan 📖\`${{ steps.plan.outcome }}\`
+
+            <details><summary>Show Plan</summary>
+
+            \`\`\`terraform
+            ${process.env.PLAN_OUTPUT}
+            \`\`\`
+
+            </details>
+
+            *Pushed by: @${{ github.actor }}, Action: \`${{ github.event_name }}\`*`;
+              
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: output
+            })
+
+      - name: Terraform Plan Status
+        if: steps.plan.outcome == 'failure'
+        run: exit 1
+
+      - name: Terraform Apply
+        if: github.ref == 'refs/heads/main' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
+        run: |
+          terraform apply \
+            -auto-approve \
+            -input=false \
+            tfplan
+
+      - name: Output Resources
+        if: github.ref == 'refs/heads/main' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
+        run: |
+          echo "=== Terraform Outputs ==="
+          terraform output -json | jq -r 'to_entries[] | "\(.key): \(.value.value)"' || echo "No outputs available"
+
+      # Optional: Invalidate CloudFront cache after deployment
+      - name: Invalidate CloudFront Cache
+        if: github.ref == 'refs/heads/main' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
+        run: |
+          if terraform output -json | jq -e '.cloudfront_distribution_id' >/dev/null 2>&1; then
+            DISTRIBUTION_ID=$(terraform output -raw cloudfront_distribution_id)
+            if [ -n "$DISTRIBUTION_ID" ]; then
+              echo "Invalidating CloudFront cache for distribution $DISTRIBUTION_ID"
+              aws cloudfront create-invalidation --distribution-id $DISTRIBUTION_ID --paths "/*"
+            else
+              echo "CloudFront distribution ID is empty, skipping cache invalidation"
+            fi
+          else
+            echo "CloudFront distribution ID output not found, skipping cache invalidation"
+          fi
