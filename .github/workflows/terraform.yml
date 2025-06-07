@@ -52,8 +52,8 @@ jobs:
       - name: Verify State File Location
         run: |
           echo "=== Checking existing state file location ==="
-          STATE_BUCKET="synepho-terraform-state"
-          STATE_KEY="synepho-com/terraform.tfstate"
+          STATE_BUCKET="lawnsmartapp-terraform-state"
+          STATE_KEY="lawnsmartapp-com/terraform.tfstate"
           
           echo "Environment: $ENVIRONMENT"
           echo "Looking for state file at: $STATE_BUCKET/$STATE_KEY"
@@ -72,7 +72,7 @@ jobs:
       - name: Create Terraform State Infrastructure
         run: |
           # Use same state infrastructure as local development
-          STATE_BUCKET="synepho-terraform-state"
+          STATE_BUCKET="lawnsmartapp-terraform-state"
           LOCK_TABLE="terraform-locks"
           
           # Check and Create S3 Bucket for state
