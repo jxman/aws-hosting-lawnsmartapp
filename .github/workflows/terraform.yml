@@ -28,8 +28,8 @@ jobs:
     runs-on: ubuntu-latest
 
     env:
-      # Environment configuration
-      ENVIRONMENT: "prod"  # Change to 'dev' or 'staging' for other environments
+      # Environment configuration - aligned with local development
+      ENVIRONMENT: "dev"  # Using dev environment to match local state
 
     steps:
       - name: Checkout Repository
@@ -52,8 +52,8 @@ jobs:
       - name: Verify State File Location
         run: |
           echo "=== Checking existing state file location ==="
-          STATE_BUCKET="lawnsmartapp-terraform-state"
-          STATE_KEY="lawnsmartapp-com/terraform.tfstate"
+          STATE_BUCKET="lawnsmartapp-terraform-state-dev"
+          STATE_KEY="terraform.tfstate"
           
           echo "Environment: $ENVIRONMENT"
           echo "Looking for state file at: $STATE_BUCKET/$STATE_KEY"
@@ -72,8 +72,8 @@ jobs:
       - name: Create Terraform State Infrastructure
         run: |
           # Use same state infrastructure as local development
-          STATE_BUCKET="lawnsmartapp-terraform-state"
-          LOCK_TABLE="terraform-locks"
+          STATE_BUCKET="lawnsmartapp-terraform-state-dev"
+          LOCK_TABLE="lawnsmartapp-terraform-locks-dev"
           
           # Check and Create S3 Bucket for state
           if ! aws s3api head-bucket --bucket $STATE_BUCKET 2>/dev/null; then
