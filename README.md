@@ -4,46 +4,67 @@
 [![AWS](https://img.shields.io/badge/AWS-%23FF9900.svg?style=for-the-badge&logo=amazon-aws&logoColor=white)](https://aws.amazon.com/)
 ![GitHub Actions Workflow Status](https://img.shields.io/github/actions/workflow/status/jxman/aws-hosting-lawnsmartapp/terraform.yml?branch=main&style=for-the-badge)
 
-This repository contains Infrastructure as Code (IaC) for deploying a production-ready React application hosting solution on AWS. Specifically designed for the LawnSmart App - a smart lawn care management application.
+This repository contains Infrastructure as Code (IaC) for deploying a production-ready React application hosting solution on AWS with **complete multi-environment isolation**. Specifically designed for the LawnSmart App - a smart lawn care management application.
 
 ## 🚀 Live Infrastructure
 
-**Website:** [https://lawnsmartapp.com](https://lawnsmartapp.com) *(DNS propagating)*  
-**CloudFront URL:** [https://d1yvxqir7ibuig.cloudfront.net](https://d1yvxqir7ibuig.cloudfront.net)  
-**Status:** ✅ **Deployed & Active**
+**Production:** [https://lawnsmartapp.com](https://lawnsmartapp.com) *(Production Environment)*  
+**Development:** [https://dev.lawnsmartapp.com](https://dev.lawnsmartapp.com) *(Development Environment)*  
+**Staging:** [https://staging.lawnsmartapp.com](https://staging.lawnsmartapp.com) *(Staging Environment)*
 
-### Current Deployment
-- **CloudFront Distribution:** `E1MYY1CD3E7WBQ` (Deployed)
-- **SSL Certificate:** `arn:aws:acm:us-east-1:600424110307:certificate/29bff0e9-e81a-4a90-8254-e5ab09253179`
-- **Primary S3 Bucket:** `www.lawnsmartapp.com`
-- **Failover S3 Bucket:** `www.lawnsmartapp.com-secondary`
-- **Coming Soon Page:** 🎉 Active (temporary placeholder)
+### Current Deployments
 
-## 🏗️ Architecture Overview
+#### 🟢 Development Environment
+- **Domain:** `dev.lawnsmartapp.com`
+- **CloudFront Distribution:** `E2PTD8ZT17QPZ7` (Active)
+- **SSL Certificate:** `arn:aws:acm:us-east-1:600424110307:certificate/b8fda779-d949-4b2c-9d82-24171477671e`
+- **Primary S3 Bucket:** `www.dev.lawnsmartapp.com`
+- **Failover S3 Bucket:** `dev-lawnsmartapp-secondary`
+- **Status:** ✅ **Deployed & Active**
 
-The infrastructure implements a highly available, scalable architecture optimized for React Single Page Applications:
+#### 🔵 Production Environment
+- **Domain:** `lawnsmartapp.com`
+- **Status:** 🔄 **Ready for Deployment**
+
+#### 🟡 Staging Environment
+- **Domain:** `staging.lawnsmartapp.com`
+- **Status:** 🔄 **Ready for Deployment**
+
+## 🏗️ Multi-Environment Architecture
+
+The infrastructure implements **complete environment isolation** with consistent patterns across all environments:
 
 ### Core Components
 - **🌐 Multi-Region Setup**: Primary (us-east-1) + Failover (us-west-1)
-- **⚡ CloudFront CDN**: Global edge caching with custom domain
+- **⚡ CloudFront CDN**: Global edge caching with custom domains
 - **🔒 SSL/TLS**: Auto-managed certificates with Route53 validation
 - **📱 React SPA Support**: Proper routing configuration (404→index.html)
 - **🛡️ Security Headers**: CSP, HSTS, X-Frame-Options, etc.
 - **📊 Access Logging**: Centralized logging for monitoring
 - **🔄 Auto-Replication**: Cross-region S3 replication for resilience
+- **🔐 Environment Isolation**: Complete resource separation
 
 ### Architecture Diagram
 ```
-┌─────────────┐    ┌──────────────┐    ┌───────────────┐
-│   Route53   │───▶│  CloudFront  │───▶│ Primary S3    │
-│ (DNS + SSL) │    │ (Global CDN) │    │ (us-east-1)   │
-└─────────────┘    └──────────────┘    └───────────────┘
-                          │                      │
-                          │                      ▼
-                          │              ┌───────────────┐
-                          └─────────────▶│ Failover S3   │
-                                         │ (us-west-1)   │
-                                         └───────────────┘
+┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
+│   Route53 DNS  │───▶│  CloudFront CDN │───▶│ Primary S3      │
+│ (Multi-Domain)  │    │ (Environment    │    │ (us-east-1)     │
+│                 │    │  Specific)      │    │                 │
+└─────────────────┘    └─────────────────┘    └─────────────────┘
+        │                       │                       │
+        │                       │                       ▼
+        │                       │               ┌─────────────────┐
+        │                       └──────────────▶│ Failover S3     │
+        │                                       │ (us-west-1)     │
+        │                                       │                 │
+        ▼                                       └─────────────────┘
+┌─────────────────┐
+│ Environment     │
+│ Isolation:      │
+│ • dev.domain    │
+│ • staging.domain│
+│ • prod.domain   │
+└─────────────────┘
 ```
 
 ## 🛠️ Prerequisites
@@ -61,234 +82,196 @@ git clone https://github.com/jxman/aws-hosting-lawnsmartapp.git
 cd aws-hosting-lawnsmartapp
 ```
 
-### 2. Environment-Specific Deployment
+### 2. Unified Deployment Script
 
-#### Development Environment (Recommended for testing)
+**🎯 New Unified Approach** - One script handles all environments:
+
 ```bash
-# Plan changes
-./deploy-dev.sh plan
+# Development Environment (Recommended for testing)
+./deploy.sh dev plan          # Preview changes
+./deploy.sh dev apply         # Deploy to dev environment
 
-# Deploy infrastructure
-./deploy-dev.sh apply
+# Staging Environment  
+./deploy.sh staging plan      # Preview staging changes
+./deploy.sh staging apply     # Deploy to staging environment
+
+# Production Environment
+./deploy.sh prod plan         # Preview production changes
+./deploy.sh prod apply        # Deploy to production (requires confirmation)
+
+# Additional Commands
+./deploy.sh dev init          # Initialize environment backend
+./deploy.sh dev validate      # Validate configuration
+./deploy.sh dev destroy       # Destroy environment (with confirmation)
 ```
 
-#### Production Environment
+### 3. Environment-Specific Operations
 ```bash
-# Plan production changes
-./deploy-prod.sh plan
+# Check what environment you're working with
+./deploy.sh dev plan | head -10
 
-# Deploy to production (requires confirmation)
-./deploy-prod.sh apply
+# Apply with auto-approval (skip confirmation)
+./deploy.sh dev apply --auto-approve
+
+# Initialize specific environment backend
+./deploy.sh staging init
 ```
 
-#### Staging Environment
-```bash
-# Plan staging changes
-./deploy-staging.sh plan
-
-# Deploy to staging
-./deploy-staging.sh apply
-```
-
-### 3. Manual Terraform Operations
-```bash
-# Initialize with environment-specific backend
-terraform init -backend-config=environments/dev/backend.conf
-
-# Plan with environment variables
-terraform plan -var-file=environments/dev/terraform.tfvars
-
-# Apply changes
-terraform apply -var-file=environments/dev/terraform.tfvars
-```
-
-## 📁 Project Structure
+## 📁 Project Structure (Redesigned)
 
 ```
 📦 aws-hosting-lawnsmartapp/
 ├── 🏗️ modules/                    # Reusable Terraform modules
 │   ├── acm-certificate/           # SSL/TLS certificate management
-│   ├── cloudfront/               # CDN + security headers
+│   ├── cloudfront/               # CDN + security headers (env-aware)
 │   ├── github-oidc/              # OIDC authentication for GitHub Actions
-│   ├── route53/                  # DNS management
-│   └── s3-website/               # S3 hosting + replication
+│   ├── route53/                  # DNS management (multi-domain)
+│   └── s3-website/               # S3 hosting + replication (env-prefixed)
 ├── 🌍 environments/              # Environment-specific configs
-│   ├── dev/                      # Development (active)
-│   │   ├── backend.conf          # State: lawnsmartapp-terraform-state-dev
-│   │   └── terraform.tfvars      # site_name = "lawnsmartapp.com"
-│   ├── prod/                     # Production
-│   │   ├── backend.conf          # State: lawnsmartapp-terraform-state
-│   │   └── terraform.tfvars      # Production variables
-│   └── staging/                  # Staging environment
-│       ├── backend.conf          # State: lawnsmartapp-terraform-state-staging
-│       └── terraform.tfvars      # Staging variables
+│   ├── dev/terraform.tfvars      # base_domain = "lawnsmartapp.com", env = "dev"
+│   ├── prod/terraform.tfvars     # base_domain = "lawnsmartapp.com", env = "prod"  
+│   └── staging/terraform.tfvars  # base_domain = "lawnsmartapp.com", env = "staging"
+├── 🗂️ backend-configs/           # Environment-specific state backends
+│   ├── dev.conf                  # State: lawnsmartapp-terraform-state/dev/
+│   ├── staging.conf              # State: lawnsmartapp-terraform-state/staging/
+│   └── prod.conf                 # State: lawnsmartapp-terraform-state/prod/
 ├── 🚀 .github/workflows/         # CI/CD Pipeline
-│   └── terraform.yml             # GitHub Actions deployment
-├── 📜 scripts/                   # Helper scripts
-│   ├── create-prerequisites.sh   # Creates state infrastructure
-│   └── README.md                 # Script documentation
-├── 🚢 deploy-*.sh               # Environment deployment scripts
-├── 📋 main.tf                    # Main infrastructure
+│   └── terraform.yml             # GitHub Actions (multi-env support)
+├── 🚢 deploy.sh                  # 🆕 Unified deployment script
+├── 📋 main.tf                    # Main infrastructure (env-aware)
 ├── 📊 outputs.tf                 # Infrastructure outputs
-├── 🔧 variables.tf               # Input variables
+├── 🔧 variables.tf               # Input variables (with env logic)
 ├── 📌 versions.tf                # Provider constraints
-├── 📋 DEPLOYMENT_GUIDE.md         # OIDC deployment instructions
-├── 🗺️ ROADMAP.md                 # Project roadmap
+├── 📋 DEPLOYMENT.md              # 🆕 Multi-environment deployment guide
 └── 📖 README.md                  # This file
 ```
 
-## 🔄 GitOps Workflow & State Management
+## 🔄 Multi-Environment GitOps Workflow
 
-### Deployment Strategy: "Keep It Simple" ⚡
-We implement a hybrid approach that balances **development speed** with **production control**:
+### Environment Strategy: **Complete Isolation** 🎯
 
-| Trigger | Environment | Action | Approval Required |
-|---------|-------------|---------|------------------|
-| **Push to `main`** | Development | ✅ **Automatic Deploy** | ❌ No |
-| **Pull Request** | Development | 📋 **Plan Only** | ❌ No |
-| **Manual Workflow** | Production | 🎛️ **Manual Deploy** | ✅ **Required** |
-| **Local Scripts** | Any | 🔧 **Local Deploy** | ❌ No |
+| Environment | Domain | Auto-Deploy | Manual Deploy | State Isolation |
+|-------------|--------|-------------|---------------|-----------------|
+| **Development** | `dev.lawnsmartapp.com` | ✅ **Push to main** | ✅ Available | 🔐 **dev/** |
+| **Staging** | `staging.lawnsmartapp.com` | ❌ Manual only | ✅ Available | 🔐 **staging/** |
+| **Production** | `lawnsmartapp.com` | ❌ Manual only | ✅ **Confirmation Required** | 🔐 **prod/** |
 
-### 🚀 Production Deployment Methods
+### 🚀 Deployment Methods
 
-#### Method 1: GitHub UI (Recommended)
-1. **Navigate to** [GitHub Actions](https://github.com/jxman/aws-hosting-lawnsmartapp/actions)
-2. **Click** "Terraform Deployment" workflow
-3. **Click** "Run workflow" button
-4. **Select options:**
-   - **Environment:** `prod`
-   - **Action:** `plan` (preview) or `apply` (deploy)
-5. **Click** "Run workflow"
-
-#### Method 2: GitHub CLI
+#### Method 1: GitHub Actions (Recommended)
 ```bash
-# Preview production changes
+# Preview changes in any environment
+gh workflow run terraform.yml -f environment=dev -f action=plan
+gh workflow run terraform.yml -f environment=staging -f action=plan  
 gh workflow run terraform.yml -f environment=prod -f action=plan
 
-# Deploy to production  
-gh workflow run terraform.yml -f environment=prod -f action=apply
-
-# Manual dev deployment (override automatic)
+# Deploy to specific environment
 gh workflow run terraform.yml -f environment=dev -f action=apply
+gh workflow run terraform.yml -f environment=staging -f action=apply
+gh workflow run terraform.yml -f environment=prod -f action=apply
 ```
 
-#### Method 3: Local Deployment (Still Available)
+#### Method 2: Local Deployment (Full Control)
 ```bash
-# Production deployment locally
-./deploy-prod.sh plan    # Preview changes
-./deploy-prod.sh apply   # Deploy to production
-
-# Development deployment locally  
-./deploy-dev.sh plan     # Preview changes
-./deploy-dev.sh apply    # Deploy to development
+# Work with any environment locally
+./deploy.sh dev plan && ./deploy.sh dev apply
+./deploy.sh staging plan && ./deploy.sh staging apply  
+./deploy.sh prod plan && ./deploy.sh prod apply
 ```
+
+#### Method 3: GitHub UI
+1. **Navigate to** [GitHub Actions](https://github.com/jxman/aws-hosting-lawnsmartapp/actions)
+2. **Click** "Terraform Deployment" workflow → "Run workflow"
+3. **Select Environment:** `dev`, `staging`, or `prod`
+4. **Select Action:** `plan` (preview) or `apply` (deploy)
 
 ### 🏗️ State Management (Perfect Isolation)
 
-| Environment | State Bucket | State Key | Lock Table | Usage |
-|-------------|--------------|-----------|------------|-------|
-| **Development** | `lawnsmartapp-terraform-state-dev` | `terraform.tfstate` | `lawnsmartapp-terraform-locks-dev` | ✅ **Auto + Manual** |
-| **Production** | `lawnsmartapp-terraform-state` | `lawnsmartapp-com/terraform.tfstate` | `terraform-locks` | 🎛️ **Manual Only** |
+**🎯 Unified State Bucket with Environment Keys:**
+
+| Environment | State Location | Lock Table | Resource Prefix |
+|-------------|----------------|------------|-----------------|
+| **Development** | `lawnsmartapp-terraform-state/dev/terraform.tfstate` | `lawnsmartapp-terraform-locks` | `dev-lawnsmartapp-*` |
+| **Staging** | `lawnsmartapp-terraform-state/staging/terraform.tfstate` | `lawnsmartapp-terraform-locks` | `staging-lawnsmartapp-*` |
+| **Production** | `lawnsmartapp-terraform-state/prod/terraform.tfstate` | `lawnsmartapp-terraform-locks` | `lawnsmartapp-*` (clean) |
 
 **🎯 Key Benefits:**
-- ✅ **Complete isolation** between dev and prod environments
-- ✅ **No state conflicts** or cross-environment contamination  
-- ✅ **Local ↔ CI/CD consistency** for each environment
-- ✅ **Same infrastructure code** manages both environments
+- ✅ **Complete resource isolation** - no naming conflicts
+- ✅ **Shared state infrastructure** - simplified management
+- ✅ **Environment-specific prefixes** - clear resource ownership
+- ✅ **Unified deployment patterns** - same commands for all environments
 
-### 🔄 Complete Development Workflow
+### 🔄 Development Workflow
 
-#### 1. **Feature Development** (Automatic Dev Deployment)
+#### 1. **Feature Development** (Auto-Deploy to Dev)
 ```bash
-# Create feature branch
-git checkout -b feature/new-infrastructure main
-
-# Make infrastructure changes  
+# Make infrastructure changes
 vim modules/cloudfront/main.tf
 
-# Test locally (uses dev state)
-./deploy-dev.sh plan
-./deploy-dev.sh apply
+# Test locally in dev
+./deploy.sh dev plan
+./deploy.sh dev apply
 
-# Commit and push
+# Commit and push (triggers auto-deploy to dev)
 git add . && git commit -m "feat: add new infrastructure"
-git push origin feature/new-infrastructure
-```
-
-#### 2. **Pull Request Validation**
-- 🤖 **GitHub Actions automatically runs** `terraform plan`
-- 📝 **Plan results posted** as PR comments  
-- 👥 **Team reviews** infrastructure changes
-- 🛡️ **No deployments** during PR phase
-
-#### 3. **Development Deployment** (Automatic)
-```bash
-# Merge PR to main
-git checkout main && git merge feature/new-infrastructure
 git push origin main
-
-# ✅ Triggers automatic development deployment
-# 📊 Uses shared dev state file
-# 🔄 Infrastructure updated automatically
+# ✅ Automatically deploys to dev.lawnsmartapp.com
 ```
 
-#### 4. **Production Release** (Manual Control)
+#### 2. **Staging Validation** (Manual)
 ```bash
-# Option A: GitHub UI
-# 1. Go to Actions → Terraform Deployment → Run workflow
-# 2. Environment: prod, Action: plan (review first)
-# 3. Environment: prod, Action: apply (deploy)
+# Promote to staging environment  
+./deploy.sh staging plan      # Review changes
+./deploy.sh staging apply     # Deploy to staging.lawnsmartapp.com
 
-# Option B: Command line
-gh workflow run terraform.yml -f environment=prod -f action=plan
+# Or via GitHub Actions
+gh workflow run terraform.yml -f environment=staging -f action=apply
+```
+
+#### 3. **Production Release** (Manual + Confirmation)
+```bash
+# Production deployment (requires confirmation)
+./deploy.sh prod plan         # Review production changes
+./deploy.sh prod apply        # Deploy to lawnsmartapp.com (asks for confirmation)
+
+# Or via GitHub Actions
 gh workflow run terraform.yml -f environment=prod -f action=apply
-
-# Option C: Local deployment
-./deploy-prod.sh plan && ./deploy-prod.sh apply
 ```
 
-### 🛡️ Production Safeguards
+## 🛡️ Environment Isolation & Security
 
-- 🔒 **Manual approval required** for all production changes
-- 📋 **Plan step always runs first** to preview changes  
-- 🎯 **Explicit environment selection** prevents accidents
-- 📊 **Complete audit trail** in GitHub Actions logs
-- 🔐 **OIDC authentication** with no stored AWS secrets
-- 🚫 **No automatic production deployments** - ever
+### Resource Naming Patterns
+Each environment uses consistent, isolated naming:
 
-## 🛡️ Security Implementation
+#### Development Resources
+- **S3 Buckets:** `dev-lawnsmartapp-site-logs`, `www.dev.lawnsmartapp.com`, `dev-lawnsmartapp-secondary`
+- **IAM Roles:** `dev-lawnsmartapp-replication-role`
+- **CloudFront:** `dev-dev-lawnsmartapp-com-oac`
+- **Domain:** `dev.lawnsmartapp.com`
 
-This infrastructure follows AWS security best practices with enterprise-grade CI/CD security:
+#### Staging Resources  
+- **S3 Buckets:** `staging-lawnsmartapp-site-logs`, `www.staging.lawnsmartapp.com`, `staging-lawnsmartapp-secondary`
+- **IAM Roles:** `staging-lawnsmartapp-replication-role`
+- **CloudFront:** `staging-staging-lawnsmartapp-com-oac`
+- **Domain:** `staging.lawnsmartapp.com`
 
-### Infrastructure Security
-- ✅ **Origin Access Control (OAC)**: S3 buckets only accessible via CloudFront
-- ✅ **TLS 1.2+ Encryption**: All traffic encrypted with auto-managed certificates
-- ✅ **Security Headers**: Comprehensive CSP, HSTS, X-Frame-Options
-- ✅ **Access Logging**: Comprehensive audit trail
-- ✅ **Public Access Blocked**: S3 buckets completely private
-- ✅ **State Encryption**: AES256 encryption for Terraform state
+#### Production Resources
+- **S3 Buckets:** `lawnsmartapp-site-logs`, `www.lawnsmartapp.com`, `lawnsmartapp-secondary`  
+- **IAM Roles:** `prod-lawnsmartapp-replication-role`
+- **CloudFront:** `prod-lawnsmartapp-com-oac`
+- **Domain:** `lawnsmartapp.com`
 
-### CI/CD Security (OIDC Implementation)
+### Security Implementation
 - ✅ **Project-Specific IAM Role**: `GithubActionsOIDC-LawnSmartApp-Role`
-- ✅ **Repository Isolation**: Only `jxman/aws-hosting-lawnsmartapp` can assume the role
-- ✅ **No Stored Secrets**: OIDC web identity federation eliminates long-lived credentials
-- ✅ **Least Privilege Permissions**: IAM policy scoped to only required resources
-- ✅ **Cross-Repository Protection**: Trust policy prevents access from other repositories
-- ✅ **Audit Trail**: All deployments tied to specific GitHub repository and user
-
-### Implemented Security Headers
-```yaml
-Content-Security-Policy: default-src 'self'; script-src 'self' 'unsafe-inline'
-Strict-Transport-Security: max-age=31536000; includeSubDomains; preload
-X-Frame-Options: DENY
-X-Content-Type-Options: nosniff
-X-XSS-Protection: 1; mode=block
-Referrer-Policy: strict-origin-when-cross-origin
-```
+- ✅ **Environment-Specific Resources**: Complete isolation prevents conflicts
+- ✅ **OIDC Authentication**: No stored AWS credentials in GitHub
+- ✅ **Least Privilege Permissions**: IAM policies scoped to project resources
+- ✅ **State Encryption**: AES256 encryption for all Terraform state
+- ✅ **Origin Access Control**: S3 buckets only accessible via CloudFront
 
 ## 📱 React SPA Configuration
 
-The infrastructure is specifically optimized for React applications:
+Optimized for React applications across all environments:
 
 ### Custom Error Handling
 ```terraform
@@ -300,232 +283,141 @@ custom_error_response {
 }
 ```
 
-### Deployment Process
+### Environment-Specific Deployment
 ```bash
 # Build your React app
 npm run build
 
-# Deploy to S3 (replace with your bucket)
-aws s3 sync build/ s3://www.lawnsmartapp.com/ --delete
+# Deploy to specific environment
+aws s3 sync build/ s3://www.dev.lawnsmartapp.com/ --delete          # Dev
+aws s3 sync build/ s3://www.staging.lawnsmartapp.com/ --delete      # Staging  
+aws s3 sync build/ s3://www.lawnsmartapp.com/ --delete              # Production
 
-# Invalidate CloudFront cache
-aws cloudfront create-invalidation \
-  --distribution-id E1MYY1CD3E7WBQ \
-  --paths "/*"
+# Invalidate CloudFront cache (get distribution ID from terraform output)
+aws cloudfront create-invalidation --distribution-id E2PTD8ZT17QPZ7 --paths "/*"
 ```
 
 ## 📊 Infrastructure Outputs
 
-After deployment, these outputs are available:
+View outputs for any environment:
 
 ```bash
-terraform output
+# Development outputs
+./deploy.sh dev plan | grep -A 10 "Changes to Outputs"
+terraform output  # (when in dev context)
+
+# Staging outputs  
+./deploy.sh staging plan | grep -A 10 "Changes to Outputs"
+
+# Production outputs
+./deploy.sh prod plan | grep -A 10 "Changes to Outputs"
 ```
 
-**Current Outputs:**
-- **website_url**: `https://lawnsmartapp.com`
-- **cloudfront_distribution_id**: `E1MYY1CD3E7WBQ`
-- **cloudfront_domain_name**: `d1yvxqir7ibuig.cloudfront.net`
-- **certificate_arn**: `arn:aws:acm:us-east-1:600424110307:certificate/29bff0e9-e81a-4a90-8254-e5ab09253179`
-- **primary_s3_bucket**: `www.lawnsmartapp.com`
-- **failover_s3_bucket**: `www.lawnsmartapp.com-secondary`
-- **github_actions_role_arn**: `arn:aws:iam::600424110307:role/GithubActionsOIDC-LawnSmartApp-Role`
-- **github_actions_role_name**: `GithubActionsOIDC-LawnSmartApp-Role`
+**Sample Dev Environment Outputs:**
+- **website_url**: `https://dev.lawnsmartapp.com`
+- **cloudfront_distribution_id**: `E2PTD8ZT17QPZ7`
+- **cloudfront_domain_name**: `d3eg6tuz3zkuh9.cloudfront.net`
+- **certificate_arn**: `arn:aws:acm:us-east-1:600424110307:certificate/b8fda779-d949-4b2c-9d82-24171477671e`
+- **primary_s3_bucket**: `www.dev.lawnsmartapp.com`
+- **failover_s3_bucket**: `dev-lawnsmartapp-secondary`
 
-## 💰 Cost Optimization
+## 🔍 Troubleshooting & Operations
 
-This architecture is designed for cost efficiency:
+### Environment-Specific Debugging
 
-- **🎯 Intelligent Tiering**: Automatic S3 cost optimization
-- **⚡ CloudFront Caching**: Reduced origin requests
-- **📊 Lifecycle Policies**: Automated log retention management
-- **🔄 Single Distribution**: Origin failover vs duplicate resources
-- **💾 Efficient State Storage**: Minimal backend costs
-
-**Estimated Monthly Cost:** ~$5-15 for typical usage
-
-## 🔍 Monitoring & Observability
-
-- **📊 CloudWatch Metrics**: Built-in monitoring for all services
-- **📝 Access Logs**: Stored in `lawnsmartapp.com-site-logs` bucket
-- **🔄 Health Checks**: Automatic failover monitoring
-- **📈 Performance Tracking**: CloudFront analytics
-- **🛡️ Security Monitoring**: WAF logs (when enabled)
-
-## 🚦 Troubleshooting & Operations
-
-### Common Issues
-
-**DNS Not Resolving:**
+**Check Environment State:**
 ```bash
-# Check DNS propagation
-dig lawnsmartapp.com
-nslookup lawnsmartapp.com 8.8.8.8
+# Verify which environment you're working with
+./deploy.sh dev init    # Confirms dev backend
+./deploy.sh staging init    # Confirms staging backend
+./deploy.sh prod init   # Confirms production backend
 
-# Test CloudFront directly
-curl -I https://d1yvxqir7ibuig.cloudfront.net
+# List resources in specific environment  
+terraform init -backend-config=backend-configs/dev.conf
+terraform state list
+
+terraform init -backend-config=backend-configs/staging.conf  
+terraform state list
+
+terraform init -backend-config=backend-configs/prod.conf
+terraform state list
 ```
 
-**CloudFront 403 Errors:**
+**DNS Resolution Testing:**
 ```bash
-# Verify S3 bucket policy
-aws s3api get-bucket-policy --bucket www.lawnsmartapp.com
+# Test all environments
+dig dev.lawnsmartapp.com      # Development
+dig staging.lawnsmartapp.com  # Staging
+dig lawnsmartapp.com          # Production
 
-# Check Origin Access Control
-aws cloudfront get-origin-access-control --id E37JD27FT6OXRT
+# Test CloudFront endpoints
+curl -I https://dev.lawnsmartapp.com
+curl -I https://staging.lawnsmartapp.com  
+curl -I https://lawnsmartapp.com
 ```
 
 **State Lock Issues:**
 ```bash
-# Check lock status
-aws dynamodb scan --table-name lawnsmartapp-terraform-locks-dev
-aws dynamodb scan --table-name terraform-locks
+# Check lock status for specific environment
+aws dynamodb scan --table-name lawnsmartapp-terraform-locks \
+  --filter-expression "contains(LockID, :env)" \
+  --expression-attribute-values '{":env":{"S":"dev"}}'
 
-# Force unlock (use with caution)
-terraform force-unlock <LOCK_ID>
+# Force unlock specific environment (use with caution)
+terraform force-unlock <LOCK_ID> -backend-config=backend-configs/dev.conf
 ```
 
-**Environment Confusion:**
+### Emergency Procedures
+
+**Environment Rollback:**
 ```bash
-# Check which environment you're working with
-terraform workspace show
-
-# Verify state backend configuration
-cat .terraform/terraform.tfstate | jq '.backend.config'
-
-# List resources in current state
-terraform state list
-```
-
-### 🔄 Emergency Procedures
-
-**Production Rollback:**
-```bash
-# Method 1: GitHub UI Rollback
-# 1. Go to GitHub Actions → Terraform Deployment → Run workflow
-# 2. Use previous commit hash: git checkout <previous-commit>
-# 3. Environment: prod, Action: apply
-
-# Method 2: Local Rollback
+# Method 1: Git rollback + redeploy
 git checkout <previous-working-commit>
-./deploy-prod.sh plan   # Verify rollback plan
-./deploy-prod.sh apply  # Execute rollback
+./deploy.sh <environment> plan    # Review rollback plan
+./deploy.sh <environment> apply   # Execute rollback
 
-# Method 3: State manipulation (advanced)
-terraform state rm <resource>  # Remove problematic resource
-terraform import <resource> <id>  # Re-import if needed
+# Method 2: GitHub Actions rollback
+# Use the GitHub UI to re-run a previous successful workflow
 ```
 
-**Split-Brain State Issues:**
+**Environment Isolation Verification:**
 ```bash
-# Check state file consistency
-aws s3 cp s3://lawnsmartapp-terraform-state-dev/terraform.tfstate /tmp/dev-state.json
-aws s3 cp s3://lawnsmartapp-terraform-state/lawnsmartapp-com/terraform.tfstate /tmp/prod-state.json
-
-# Compare resource counts
-cat /tmp/dev-state.json | jq '.resources | length'
-cat /tmp/prod-state.json | jq '.resources | length'
-
-# Force refresh if needed
-terraform refresh -var-file=environments/dev/terraform.tfvars    # Dev
-terraform refresh -var-file=environments/prod/terraform.tfvars   # Prod
+# Ensure no resource conflicts between environments
+aws s3 ls | grep lawnsmartapp                    # Should show env-prefixed buckets
+aws iam list-roles | grep lawnsmartapp          # Should show env-prefixed roles  
+aws cloudfront list-distributions | grep lawnsmartapp  # Should show env-specific distributions
 ```
 
-**Manual State Recovery:**
-```bash
-# Backup current state
-aws s3 cp s3://lawnsmartapp-terraform-state-dev/terraform.tfstate backup-$(date +%Y%m%d).tfstate
-
-# List state versions (if versioning enabled)
-aws s3api list-object-versions --bucket lawnsmartapp-terraform-state-dev --prefix terraform.tfstate
-
-# Restore from backup
-aws s3 cp backup-20241201.tfstate s3://lawnsmartapp-terraform-state-dev/terraform.tfstate
-```
-
-### 🔍 Monitoring & Health Checks
-
-**GitHub Actions Monitoring:**
-```bash
-# Check workflow status
-gh run list --workflow=terraform.yml
-
-# View specific run details  
-gh run view <run-id>
-
-# Re-run failed workflow
-gh run rerun <run-id>
-```
-
-**Infrastructure Health:**
-```bash
-# Check CloudFront distribution status
-aws cloudfront get-distribution --id E1MYY1CD3E7WBQ --query 'Distribution.Status'
-
-# Verify SSL certificate  
-aws acm describe-certificate --certificate-arn arn:aws:acm:us-east-1:600424110307:certificate/29bff0e9-e81a-4a90-8254-e5ab09253179
-
-# Test website connectivity
-curl -I https://lawnsmartapp.com
-curl -I https://www.lawnsmartapp.com
-```
-
-**State File Integrity:**
-```bash
-# Validate state file structure
-terraform state pull | jq '.version, .resources | length'
-
-# Check for drift
-terraform plan -detailed-exitcode -var-file=environments/dev/terraform.tfvars
-# Exit code 0: no changes, 1: error, 2: changes detected
-```
-
-## 🧪 Testing
+## 🧪 Testing & Validation
 
 ### Infrastructure Testing
 ```bash
-# Validate Terraform configuration
-terraform validate
+# Validate configuration for all environments
+./deploy.sh dev validate
+./deploy.sh staging validate  
+./deploy.sh prod validate
 
 # Check formatting
 terraform fmt -check -recursive
 
-# Security scan (if tfsec installed)
-tfsec .
+# Test deployment without applying
+./deploy.sh dev plan
+./deploy.sh staging plan
+./deploy.sh prod plan
 ```
 
-### Website Testing
+### Environment Connectivity Testing
 ```bash
-# Test CloudFront
-curl -I https://d1yvxqir7ibuig.cloudfront.net
-
-# Test domain (once DNS propagates)
+# Test all environments
+curl -I https://dev.lawnsmartapp.com
+curl -I https://staging.lawnsmartapp.com
 curl -I https://lawnsmartapp.com
 
-# Check security headers
-curl -I https://lawnsmartapp.com | grep -E "(Strict-Transport|X-Frame|Content-Security)"
-```
-
-## 🤝 Contributing
-
-1. **Fork** the repository
-2. **Create** your feature branch (`git checkout -b feature/amazing-feature`)
-3. **Test** changes in dev environment (`./deploy-dev.sh plan`)
-4. **Format** code (`terraform fmt -recursive`)
-5. **Commit** changes (`git commit -m 'Add amazing feature'`)
-6. **Push** to branch (`git push origin feature/amazing-feature`)
-7. **Open** a Pull Request
-
-### Pre-commit Hooks
-```bash
-# Install pre-commit
-pip install pre-commit
-
-# Install hooks
-pre-commit install
-
-# Run manually
-pre-commit run --all-files
+# Check security headers across environments
+for env in dev staging www; do
+  echo "=== ${env}.lawnsmartapp.com ==="
+  curl -I https://${env}.lawnsmartapp.com | grep -E "(Strict-Transport|X-Frame|Content-Security)"
+done
 ```
 
 ## 📋 Quick Reference
@@ -534,36 +426,37 @@ pre-commit run --all-files
 
 | Task | Command | Environment |
 |------|---------|-------------|
-| **Daily dev work** | `git push origin main` | Development (auto) |
-| **Preview prod changes** | `gh workflow run terraform.yml -f environment=prod -f action=plan` | Production |
-| **Deploy to prod** | `gh workflow run terraform.yml -f environment=prod -f action=apply` | Production |
-| **Local dev deploy** | `./deploy-dev.sh apply` | Development |
-| **Local prod deploy** | `./deploy-prod.sh apply` | Production |
-| **Check infrastructure** | `terraform output` | Current |
-| **Validate config** | `terraform validate && terraform fmt -check` | Any |
+| **Deploy to dev** | `git push origin main` | Development (auto) |
+| **Deploy to staging** | `./deploy.sh staging apply` | Staging |
+| **Deploy to production** | `./deploy.sh prod apply` | Production |
+| **Preview changes** | `./deploy.sh <env> plan` | Any |
+| **Initialize environment** | `./deploy.sh <env> init` | Any |
+| **Validate config** | `./deploy.sh <env> validate` | Any |
+| **Format code** | `terraform fmt -recursive` | All |
+| **Check environment** | `terraform state list` | Current |
 
-### 🔗 **Important URLs**
+### 🔗 **Environment URLs**
 
-- **Website:** [https://lawnsmartapp.com](https://lawnsmartapp.com)
-- **CloudFront:** [https://d1yvxqir7ibuig.cloudfront.net](https://d1yvxqir7ibuig.cloudfront.net)
+- **Development:** [https://dev.lawnsmartapp.com](https://dev.lawnsmartapp.com)
+- **Staging:** [https://staging.lawnsmartapp.com](https://staging.lawnsmartapp.com)  
+- **Production:** [https://lawnsmartapp.com](https://lawnsmartapp.com)
 - **GitHub Actions:** [View Workflows](https://github.com/jxman/aws-hosting-lawnsmartapp/actions)
-- **Manual Deploy:** [Run Workflow](https://github.com/jxman/aws-hosting-lawnsmartapp/actions/workflows/terraform.yml)
 
 ### 🎯 **State Locations**
 
 ```bash
-# Development State
-aws s3 ls s3://lawnsmartapp-terraform-state-dev/
-
-# Production State  
-aws s3 ls s3://lawnsmartapp-terraform-state/lawnsmartapp-com/
+# View all environment states
+aws s3 ls s3://lawnsmartapp-terraform-state/
+# Expected output:
+#   dev/
+#   staging/  
+#   prod/
 ```
 
 ## 📚 Additional Resources
 
-- **[ROADMAP.md](ROADMAP.md)** - Future improvements and features
-- **[environments/README.md](environments/README.md)** - Environment configuration details  
-- **[scripts/README.md](scripts/README.md)** - Deployment script documentation
+- **[DEPLOYMENT.md](DEPLOYMENT.md)** - Comprehensive multi-environment deployment guide
+- **[deploy.sh](deploy.sh)** - Unified deployment script documentation  
 - **[Terraform AWS Provider Docs](https://registry.terraform.io/providers/hashicorp/aws/latest/docs)**
 - **[AWS Well-Architected Framework](https://aws.amazon.com/architecture/well-architected/)**
 
@@ -574,11 +467,11 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 ## 🙏 Acknowledgments
 
 - **Terraform Community** for excellent AWS provider
-- **AWS Documentation** for architecture best practices
+- **AWS Documentation** for architecture best practices  
 - **GitHub Actions** for seamless CI/CD integration
 - **React Team** for the amazing framework this infrastructure supports
 
 ---
 
 **🌱 Built for LawnSmart App - Smart Lawn Care Management**  
-*Deployed with ❤️ using Terraform + AWS + GitHub Actions*
+*Multi-Environment Infrastructure deployed with ❤️ using Terraform + AWS + GitHub Actions*

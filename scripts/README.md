@@ -181,43 +181,47 @@ Example customization:
 
 ## Deployment Scripts
 
-### Production Deployment
+### Unified Deployment Script (Recommended)
 ```bash
-./deploy-prod.sh [plan|apply|destroy]
+./deploy.sh <environment> [command] [options]
+
+# Examples:
+./deploy.sh dev plan              # Plan development changes
+./deploy.sh staging apply         # Deploy to staging
+./deploy.sh prod apply            # Deploy to production
 ```
 
-### Development Deployment  
+### Legacy Environment-Specific Scripts
 ```bash
-./deploy-dev.sh [plan|apply|destroy]
+./deploy-prod.sh [plan|apply|destroy]    # Production deployment
+./deploy-dev.sh [plan|apply|destroy]     # Development deployment  
+./deploy-staging.sh [plan|apply|destroy] # Staging deployment
 ```
 
 ## Usage Examples
 
 ### Plan Changes
 ```bash
-# Production planning
-./deploy-prod.sh plan
-
-# Development planning
-./deploy-dev.sh plan
+# Plan changes for any environment
+./deploy.sh dev plan
+./deploy.sh staging plan
+./deploy.sh prod plan
 ```
 
 ### Deploy Changes
 ```bash
-# Deploy to production (requires confirmation)
-./deploy-prod.sh apply
-
-# Deploy to development
-./deploy-dev.sh apply
+# Deploy to any environment
+./deploy.sh dev apply
+./deploy.sh staging apply
+./deploy.sh prod apply
 ```
 
 ### Destroy Environment
 ```bash
-# Destroy production (requires typing 'DELETE')
-./deploy-prod.sh destroy
-
-# Destroy development (requires typing 'yes')
-./deploy-dev.sh destroy
+# Destroy any environment (requires confirmation)
+./deploy.sh dev destroy
+./deploy.sh staging destroy
+./deploy.sh prod destroy
 ```
 
 ## Features

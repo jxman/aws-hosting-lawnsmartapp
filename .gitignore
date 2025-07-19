@@ -37,3 +37,51 @@ terraform.rc
 # Terraform plan output
 plan.out
 plan.tfplan
+tfplan*
+tfplan-*
+
+# Architecture diagram artifacts
+aws-icons.zip
+__MACOSX/
+*.zip
+
+# Generated architecture diagrams (keep only the main one in git)
+aws-architecture-diagram-with-icons.svg
+architecture-diagram.svg
+
+# Screenshots and temporary images
+screenshot.png
+*.png
+*.jpg
+*.jpeg
+
+# Diagram configuration with sensitive data (uncomment if needed)
+# .diagram-config.json
+
+# Environment-specific plan files
+*-plan.out
+*-plan.tfplan
+
+# IDE and editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Backup files
+*.backup
+*.bak
+*.orig
+
+# Log files
+*.log
+
+# OS generated files
+Thumbs.db
+ehthumbs.db
+
+# Temporary files
+tmp/
+temp/
+.tmp/
