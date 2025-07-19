@@ -109,6 +109,7 @@ terraform apply -var-file=environments/dev/terraform.tfvars
 ├── 🏗️ modules/                    # Reusable Terraform modules
 │   ├── acm-certificate/           # SSL/TLS certificate management
 │   ├── cloudfront/               # CDN + security headers
+│   ├── github-oidc/              # OIDC authentication for GitHub Actions
 │   ├── route53/                  # DNS management
 │   └── s3-website/               # S3 hosting + replication
 ├── 🌍 environments/              # Environment-specific configs
@@ -131,6 +132,7 @@ terraform apply -var-file=environments/dev/terraform.tfvars
 ├── 📊 outputs.tf                 # Infrastructure outputs
 ├── 🔧 variables.tf               # Input variables
 ├── 📌 versions.tf                # Provider constraints
+├── 📋 DEPLOYMENT_GUIDE.md         # OIDC deployment instructions
 ├── 🗺️ ROADMAP.md                 # Project roadmap
 └── 📖 README.md                  # This file
 ```
@@ -256,15 +258,23 @@ gh workflow run terraform.yml -f environment=prod -f action=apply
 
 ## 🛡️ Security Implementation
 
-This infrastructure follows AWS security best practices:
+This infrastructure follows AWS security best practices with enterprise-grade CI/CD security:
 
+### Infrastructure Security
 - ✅ **Origin Access Control (OAC)**: S3 buckets only accessible via CloudFront
 - ✅ **TLS 1.2+ Encryption**: All traffic encrypted with auto-managed certificates
 - ✅ **Security Headers**: Comprehensive CSP, HSTS, X-Frame-Options
-- ✅ **IAM Least Privilege**: Minimal permissions for all roles
 - ✅ **Access Logging**: Comprehensive audit trail
 - ✅ **Public Access Blocked**: S3 buckets completely private
 - ✅ **State Encryption**: AES256 encryption for Terraform state
+
+### CI/CD Security (OIDC Implementation)
+- ✅ **Project-Specific IAM Role**: `GithubActionsOIDC-LawnSmartApp-Role`
+- ✅ **Repository Isolation**: Only `jxman/aws-hosting-lawnsmartapp` can assume the role
+- ✅ **No Stored Secrets**: OIDC web identity federation eliminates long-lived credentials
+- ✅ **Least Privilege Permissions**: IAM policy scoped to only required resources
+- ✅ **Cross-Repository Protection**: Trust policy prevents access from other repositories
+- ✅ **Audit Trail**: All deployments tied to specific GitHub repository and user
 
 ### Implemented Security Headers
 ```yaml
@@ -319,6 +329,8 @@ terraform output
 - **certificate_arn**: `arn:aws:acm:us-east-1:600424110307:certificate/29bff0e9-e81a-4a90-8254-e5ab09253179`
 - **primary_s3_bucket**: `www.lawnsmartapp.com`
 - **failover_s3_bucket**: `www.lawnsmartapp.com-secondary`
+- **github_actions_role_arn**: `arn:aws:iam::600424110307:role/GithubActionsOIDC-LawnSmartApp-Role`
+- **github_actions_role_name**: `GithubActionsOIDC-LawnSmartApp-Role`
 
 ## 💰 Cost Optimization
 

@@ -73,7 +73,17 @@ resource "aws_iam_policy" "github_actions_policy" {
           "s3:PutObject*",
           "s3:DeleteObject*",
           "s3:ListAllMyBuckets",
-          "s3:GetBucketLocation"
+          "s3:GetBucketLocation",
+          "s3:GetAccelerateConfiguration",
+          "s3:PutAccelerateConfiguration",
+          "s3:GetLifecycleConfiguration",
+          "s3:PutLifecycleConfiguration",
+          "s3:GetReplicationConfiguration",
+          "s3:PutReplicationConfiguration",
+          "s3:GetEncryptionConfiguration",
+          "s3:PutEncryptionConfiguration",
+          "s3:GetIntelligentTieringConfiguration",
+          "s3:PutIntelligentTieringConfiguration"
         ]
         Resource = [
           "arn:aws:s3:::*${var.project_name}*",
@@ -99,7 +109,15 @@ resource "aws_iam_policy" "github_actions_policy" {
           "cloudfront:UpdateOriginAccessControl",
           "cloudfront:CreateInvalidation",
           "cloudfront:GetInvalidation",
-          "cloudfront:ListInvalidations"
+          "cloudfront:ListInvalidations",
+          "cloudfront:CreateResponseHeadersPolicy",
+          "cloudfront:DeleteResponseHeadersPolicy",
+          "cloudfront:GetResponseHeadersPolicy",
+          "cloudfront:UpdateResponseHeadersPolicy",
+          "cloudfront:ListResponseHeadersPolicies",
+          "cloudfront:ListTagsForResource",
+          "cloudfront:TagResource",
+          "cloudfront:UntagResource"
         ]
         Resource = "*"
       },
@@ -114,7 +132,9 @@ resource "aws_iam_policy" "github_actions_policy" {
           "route53:ListHostedZones*",
           "route53:ChangeResourceRecordSets",
           "route53:GetChange",
-          "route53:ListResourceRecordSets"
+          "route53:ListResourceRecordSets",
+          "route53:ListTagsForResource",
+          "route53:ChangeTagsForResource"
         ]
         Resource = "*"
       },
@@ -185,13 +205,22 @@ resource "aws_iam_policy" "github_actions_policy" {
           "iam:ListAttachedRolePolicies",
           "iam:TagRole",
           "iam:UntagRole",
-          "iam:ListRoleTags"
+          "iam:ListRoleTags",
+          "iam:ListRolePolicies",
+          "iam:ListPolicyVersions",
+          "iam:GetOpenIDConnectProvider",
+          "iam:CreateOpenIDConnectProvider",
+          "iam:DeleteOpenIDConnectProvider",
+          "iam:UpdateOpenIDConnectProviderThumbprint",
+          "iam:TagOpenIDConnectProvider",
+          "iam:UntagOpenIDConnectProvider"
         ]
         Resource = [
           "arn:aws:iam::${var.aws_account_id}:role/*replication*",
           "arn:aws:iam::${var.aws_account_id}:role/*${var.project_name}*",
           "arn:aws:iam::${var.aws_account_id}:policy/*replication*",
-          "arn:aws:iam::${var.aws_account_id}:policy/*${var.project_name}*"
+          "arn:aws:iam::${var.aws_account_id}:policy/*${var.project_name}*",
+          "arn:aws:iam::${var.aws_account_id}:oidc-provider/token.actions.githubusercontent.com"
         ]
       }
     ]
