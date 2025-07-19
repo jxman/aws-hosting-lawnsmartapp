@@ -1,7 +1,8 @@
 # Logs bucket
 resource "aws_s3_bucket" "logs" {
-  bucket = "${var.site_name}-site-logs"
-  tags   = merge(var.tags, { Name = "${var.site_name}-site-logs" })
+  bucket        = "${var.site_name}-site-logs"
+  force_destroy = true
+  tags          = merge(var.tags, { Name = "${var.site_name}-site-logs" })
 }
 
 resource "aws_s3_bucket_ownership_controls" "logs" {
@@ -51,8 +52,9 @@ resource "aws_s3_bucket_public_access_block" "logs" {
 
 # Primary website bucket
 resource "aws_s3_bucket" "www_site" {
-  bucket = "www.${var.site_name}"
-  tags   = merge(var.tags, { Name = "www.${var.site_name}" })
+  bucket        = "www.${var.site_name}"
+  force_destroy = true
+  tags          = merge(var.tags, { Name = "www.${var.site_name}" })
 }
 
 resource "aws_s3_bucket_versioning" "www_site" {
@@ -109,9 +111,10 @@ resource "aws_s3_bucket_public_access_block" "www_site" {
 
 # Failover bucket (secondary region)
 resource "aws_s3_bucket" "destination" {
-  provider = aws.west
-  bucket   = "www.${var.site_name}-secondary"
-  tags     = merge(var.tags, { Name = "www.${var.site_name}-secondary" })
+  provider      = aws.west
+  bucket        = "www.${var.site_name}-secondary"
+  force_destroy = true
+  tags          = merge(var.tags, { Name = "www.${var.site_name}-secondary" })
 }
 
 resource "aws_s3_bucket_versioning" "destination" {
