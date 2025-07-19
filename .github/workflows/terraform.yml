@@ -20,6 +20,7 @@ on:
         type: choice
         options:
         - dev
+        - staging
         - prod
       action:
         description: 'Terraform action to perform'
@@ -69,13 +70,8 @@ jobs:
       - name: Verify State File Location
         run: |
           echo "=== Checking existing state file location ==="
-          if [ "$ENVIRONMENT" = "prod" ]; then
-            STATE_BUCKET="lawnsmartapp-terraform-state"
-            STATE_KEY="lawnsmartapp-com/terraform.tfstate"
-          else
-            STATE_BUCKET="lawnsmartapp-terraform-state-dev"
-            STATE_KEY="terraform.tfstate"
-          fi
+          STATE_BUCKET="lawnsmartapp-terraform-state"
+          STATE_KEY="${ENVIRONMENT}/terraform.tfstate"
           
           echo "Environment: $ENVIRONMENT"
           echo "Looking for state file at: $STATE_BUCKET/$STATE_KEY"
@@ -93,14 +89,9 @@ jobs:
 
       - name: Create Terraform State Infrastructure
         run: |
-          # Environment-specific state infrastructure
-          if [ "$ENVIRONMENT" = "prod" ]; then
-            STATE_BUCKET="lawnsmartapp-terraform-state"
-            LOCK_TABLE="terraform-locks"
-          else
-            STATE_BUCKET="lawnsmartapp-terraform-state-dev"
-            LOCK_TABLE="lawnsmartapp-terraform-locks-dev"
-          fi
+          # Unified state infrastructure for all environments
+          STATE_BUCKET="lawnsmartapp-terraform-state"
+          LOCK_TABLE="lawnsmartapp-terraform-locks"
           
           echo "🎯 Environment: $ENVIRONMENT"
           echo "📦 State bucket: $STATE_BUCKET"
@@ -158,7 +149,7 @@ jobs:
         run: |
           echo "Initializing Terraform with environment-specific backend configuration..."
           echo "Environment: $ENVIRONMENT"
-          terraform init -backend-config=environments/${ENVIRONMENT}/backend.conf
+          terraform init -backend-config=backend-configs/${ENVIRONMENT}.conf -reconfigure
 
       - name: Verify State After Init
         run: |

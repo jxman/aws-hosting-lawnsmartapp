@@ -3,6 +3,11 @@ variable "site_name" {
   type        = string
 }
 
+variable "base_domain" {
+  description = "Base domain for hosted zone lookup"
+  type        = string
+}
+
 variable "tags" {
   description = "Tags to apply to resources"
   type        = map(string)

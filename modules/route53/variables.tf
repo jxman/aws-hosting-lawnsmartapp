@@ -3,6 +3,11 @@ variable "site_name" {
   type        = string
 }
 
+variable "base_domain" {
+  description = "Base domain for hosted zone lookup"
+  type        = string
+}
+
 variable "cloudfront_domain_name" {
   description = "The domain name of the CloudFront distribution"
   type        = string

@@ -15,15 +15,18 @@ module "github_oidc" {
 module "acm_certificate" {
   source = "./modules/acm-certificate"
 
-  site_name = var.site_name
-  tags      = local.common_tags
+  site_name   = local.actual_site_name
+  base_domain = var.base_domain
+  tags        = local.common_tags
 }
 
 # S3 Website Module
 module "s3_website" {
   source = "./modules/s3-website"
 
-  site_name        = var.site_name
+  site_name        = local.actual_site_name
+  environment      = var.environment
+  resource_prefix  = local.resource_prefix
   tags             = local.common_tags
   primary_region   = var.primary_region
   secondary_region = var.secondary_region
@@ -38,7 +41,8 @@ module "s3_website" {
 module "cloudfront" {
   source = "./modules/cloudfront"
 
-  site_name                       = var.site_name
+  site_name                       = local.actual_site_name
+  environment                     = var.environment
   primary_bucket_regional_domain  = module.s3_website.primary_bucket_regional_domain
   failover_bucket_regional_domain = module.s3_website.failover_bucket_regional_domain
   acm_certificate_arn             = module.acm_certificate.certificate_arn
@@ -53,7 +57,8 @@ module "cloudfront" {
 module "route53" {
   source = "./modules/route53"
 
-  site_name                 = var.site_name
+  site_name                 = local.actual_site_name
+  base_domain               = var.base_domain
   cloudfront_domain_name    = module.cloudfront.domain_name
   cloudfront_hosted_zone_id = module.cloudfront.hosted_zone_id
   tags                      = local.common_tags

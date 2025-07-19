@@ -3,6 +3,11 @@ variable "site_name" {
   type        = string
 }
 
+variable "environment" {
+  description = "Environment name (dev, staging, prod)"
+  type        = string
+}
+
 variable "primary_bucket_regional_domain" {
   description = "Regional domain name of the primary S3 bucket"
   type        = string

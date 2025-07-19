@@ -3,6 +3,16 @@ variable "site_name" {
   type        = string
 }
 
+variable "environment" {
+  description = "Environment name (dev, staging, prod)"
+  type        = string
+}
+
+variable "resource_prefix" {
+  description = "Prefix for resource naming (e.g., dev-lawnsmartapp)"
+  type        = string
+}
+
 variable "primary_region" {
   description = "Primary AWS region"
   type        = string

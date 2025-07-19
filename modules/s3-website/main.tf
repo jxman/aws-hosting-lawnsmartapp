@@ -1,7 +1,7 @@
 # Null resource to empty logs bucket before deletion
 resource "null_resource" "empty_logs_bucket" {
   triggers = {
-    bucket_name = "${var.site_name}-site-logs"
+    bucket_name = "${var.resource_prefix}-site-logs"
   }
 
   provisioner "local-exec" {
@@ -18,9 +18,9 @@ resource "null_resource" "empty_logs_bucket" {
 
 # Logs bucket
 resource "aws_s3_bucket" "logs" {
-  bucket        = "${var.site_name}-site-logs"
+  bucket        = "${var.resource_prefix}-site-logs"
   force_destroy = true
-  tags          = merge(var.tags, { Name = "${var.site_name}-site-logs" })
+  tags          = merge(var.tags, { Name = "${var.resource_prefix}-site-logs" })
   
   depends_on = [null_resource.empty_logs_bucket]
 }
@@ -152,7 +152,7 @@ resource "aws_s3_bucket_public_access_block" "www_site" {
 # Null resource to empty secondary bucket before deletion
 resource "null_resource" "empty_destination_bucket" {
   triggers = {
-    bucket_name = "www.${var.site_name}-secondary"
+    bucket_name = "${var.resource_prefix}-secondary"
   }
 
   provisioner "local-exec" {
@@ -170,9 +170,9 @@ resource "null_resource" "empty_destination_bucket" {
 # Failover bucket (secondary region)
 resource "aws_s3_bucket" "destination" {
   provider      = aws.west
-  bucket        = "www.${var.site_name}-secondary"
+  bucket        = "${var.resource_prefix}-secondary"
   force_destroy = true
-  tags          = merge(var.tags, { Name = "www.${var.site_name}-secondary" })
+  tags          = merge(var.tags, { Name = "${var.resource_prefix}-secondary" })
   
   depends_on = [null_resource.empty_destination_bucket]
 }
@@ -212,7 +212,7 @@ resource "aws_s3_bucket_public_access_block" "destination" {
 
 # IAM Role for replication
 resource "aws_iam_role" "replication" {
-  name = "tf-iam-role-replication-${var.site_name}"
+  name = "${var.resource_prefix}-replication-role"
 
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
@@ -255,7 +255,7 @@ resource "null_resource" "cleanup_replication_role" {
 
 # IAM Policy for replication
 resource "aws_iam_policy" "replication" {
-  name = "tf-iam-role-policy-replication-${var.site_name}"
+  name = "${var.resource_prefix}-replication-policy"
 
   policy = jsonencode({
     Version = "2012-10-17"

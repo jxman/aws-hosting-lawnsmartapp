@@ -1,5 +1,6 @@
 # Staging Environment Configuration
-site_name        = "staging.lawnsmartapp.com"
+base_domain      = "lawnsmartapp.com"
 environment      = "staging"
 primary_region   = "us-east-1"
 secondary_region = "us-west-1"
+github_repository = "jxman/aws-hosting-lawnsmartapp"
