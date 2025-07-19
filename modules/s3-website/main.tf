@@ -1,14 +1,7 @@
-# Logs bucket
-resource "aws_s3_bucket" "logs" {
-  bucket        = "${var.site_name}-site-logs"
-  force_destroy = true
-  tags          = merge(var.tags, { Name = "${var.site_name}-site-logs" })
-}
-
 # Null resource to empty logs bucket before deletion
 resource "null_resource" "empty_logs_bucket" {
   triggers = {
-    bucket_name = aws_s3_bucket.logs.bucket
+    bucket_name = "${var.site_name}-site-logs"
   }
 
   provisioner "local-exec" {
@@ -21,8 +14,15 @@ resource "null_resource" "empty_logs_bucket" {
       echo "Bucket ${self.triggers.bucket_name} emptied."
     EOT
   }
+}
+
+# Logs bucket
+resource "aws_s3_bucket" "logs" {
+  bucket        = "${var.site_name}-site-logs"
+  force_destroy = true
+  tags          = merge(var.tags, { Name = "${var.site_name}-site-logs" })
   
-  depends_on = [aws_s3_bucket.logs]
+  depends_on = [null_resource.empty_logs_bucket]
 }
 
 resource "aws_s3_bucket_ownership_controls" "logs" {
@@ -70,17 +70,10 @@ resource "aws_s3_bucket_public_access_block" "logs" {
   restrict_public_buckets = true
 }
 
-# Primary website bucket
-resource "aws_s3_bucket" "www_site" {
-  bucket        = "www.${var.site_name}"
-  force_destroy = true
-  tags          = merge(var.tags, { Name = "www.${var.site_name}" })
-}
-
 # Null resource to empty main website bucket before deletion
 resource "null_resource" "empty_www_bucket" {
   triggers = {
-    bucket_name = aws_s3_bucket.www_site.bucket
+    bucket_name = "www.${var.site_name}"
   }
 
   provisioner "local-exec" {
@@ -93,8 +86,15 @@ resource "null_resource" "empty_www_bucket" {
       echo "Bucket ${self.triggers.bucket_name} emptied."
     EOT
   }
+}
+
+# Primary website bucket
+resource "aws_s3_bucket" "www_site" {
+  bucket        = "www.${var.site_name}"
+  force_destroy = true
+  tags          = merge(var.tags, { Name = "www.${var.site_name}" })
   
-  depends_on = [aws_s3_bucket.www_site]
+  depends_on = [null_resource.empty_www_bucket]
 }
 
 resource "aws_s3_bucket_versioning" "www_site" {
@@ -149,18 +149,10 @@ resource "aws_s3_bucket_public_access_block" "www_site" {
   restrict_public_buckets = true
 }
 
-# Failover bucket (secondary region)
-resource "aws_s3_bucket" "destination" {
-  provider      = aws.west
-  bucket        = "www.${var.site_name}-secondary"
-  force_destroy = true
-  tags          = merge(var.tags, { Name = "www.${var.site_name}-secondary" })
-}
-
 # Null resource to empty secondary bucket before deletion
 resource "null_resource" "empty_destination_bucket" {
   triggers = {
-    bucket_name = aws_s3_bucket.destination.bucket
+    bucket_name = "www.${var.site_name}-secondary"
   }
 
   provisioner "local-exec" {
@@ -173,8 +165,16 @@ resource "null_resource" "empty_destination_bucket" {
       echo "Bucket ${self.triggers.bucket_name} emptied."
     EOT
   }
+}
+
+# Failover bucket (secondary region)
+resource "aws_s3_bucket" "destination" {
+  provider      = aws.west
+  bucket        = "www.${var.site_name}-secondary"
+  force_destroy = true
+  tags          = merge(var.tags, { Name = "www.${var.site_name}-secondary" })
   
-  depends_on = [aws_s3_bucket.destination]
+  depends_on = [null_resource.empty_destination_bucket]
 }
 
 resource "aws_s3_bucket_versioning" "destination" {
