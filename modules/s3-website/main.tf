@@ -300,7 +300,10 @@ resource "aws_iam_role_policy_attachment" "replication" {
 
 # Configure replication
 resource "aws_s3_bucket_replication_configuration" "replication" {
-  depends_on = [aws_s3_bucket_versioning.www_site]
+  depends_on = [
+    aws_s3_bucket_versioning.www_site,
+    aws_s3_bucket_versioning.destination
+  ]
 
   role   = aws_iam_role.replication.arn
   bucket = aws_s3_bucket.www_site.id

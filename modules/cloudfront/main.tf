@@ -1,14 +1,14 @@
 # Create Origin Access Control (replaces deprecated OAI)
 resource "aws_cloudfront_origin_access_control" "website_oac" {
-  name                              = "${var.site_name}-oac"
-  description                       = "Origin Access Control for ${var.site_name}"
+  name                              = "${var.environment}-${replace(var.site_name, ".", "-")}-oac"
+  description                       = "Origin Access Control for ${var.site_name} (${var.environment})"
   origin_access_control_origin_type = "s3"
   signing_behavior                  = "always"
   signing_protocol                  = "sigv4"
 }
 
 resource "aws_cloudfront_response_headers_policy" "security_headers" {
-  name = "security-headers-${replace(var.site_name, ".", "-")}"
+  name = "${var.environment}-security-headers-${replace(var.site_name, ".", "-")}"
 
   security_headers_config {
     content_security_policy {
