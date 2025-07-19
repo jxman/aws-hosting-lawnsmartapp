@@ -26,6 +26,12 @@ variable "environment" {
   default     = "prod"
 }
 
+variable "github_repository" {
+  description = "GitHub repository in format 'owner/repo'"
+  type        = string
+  default     = "jxman/aws-hosting-lawnsmartapp"
+}
+
 locals {
   common_tags = {
     Environment = var.environment

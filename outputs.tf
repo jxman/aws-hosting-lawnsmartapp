@@ -28,3 +28,14 @@ output "cloudfront_distribution_id" {
   value       = module.cloudfront.distribution_id
   sensitive   = false
 }
+
+# GitHub OIDC outputs for CI/CD reference
+output "github_actions_role_arn" {
+  description = "ARN of the IAM role for GitHub Actions"
+  value       = module.github_oidc.github_actions_role_arn
+}
+
+output "github_actions_role_name" {
+  description = "Name of the IAM role for GitHub Actions"
+  value       = module.github_oidc.github_actions_role_name
+}

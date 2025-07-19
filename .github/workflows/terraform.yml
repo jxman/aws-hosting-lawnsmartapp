@@ -58,11 +58,11 @@ jobs:
           terraform_version: "1.7.0"
           terraform_wrapper: false # Important for proper plan output parsing
 
-      # Configure AWS credentials using OIDC - single credential step
+      # Configure AWS credentials using OIDC - project-specific role
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
-          role-to-assume: arn:aws:iam::600424110307:role/GithubActionsOIDCTerraformRole
+          role-to-assume: arn:aws:iam::600424110307:role/GithubActionsOIDC-LawnSmartApp-Role
           aws-region: us-east-1
           role-session-name: GithubActionsOIDCSession
 

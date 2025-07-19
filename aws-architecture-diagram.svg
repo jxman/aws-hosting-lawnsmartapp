@@ -1,0 +1,174 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 1400 900" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="headerGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#FF9900;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#232F3E;stop-opacity:1" />
+    </linearGradient>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="2" dy="2" stdDeviation="3" flood-color="#00000040"/>
+    </filter>
+    <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#4A90E2" />
+    </marker>
+  </defs>
+  
+  <!-- Header -->
+  <rect x="0" y="0" width="1400" height="70" fill="url(#headerGradient)"/>
+  <text x="700" y="40" text-anchor="middle" fill="white" font-family="Arial, sans-serif" font-size="24" font-weight="bold">
+    LawnSmartApp AWS Static Website Hosting Architecture
+  </text>
+  
+  <!-- Internet/Users -->
+  <rect x="50" y="120" width="120" height="80" rx="10" fill="#4A90E2" filter="url(#shadow)"/>
+  <text x="110" y="145" text-anchor="middle" fill="white" font-family="Arial, sans-serif" font-size="12" font-weight="bold">Internet</text>
+  <text x="110" y="165" text-anchor="middle" fill="white" font-family="Arial, sans-serif" font-size="11">Users</text>
+  <text x="110" y="180" text-anchor="middle" fill="white" font-family="Arial, sans-serif" font-size="10">lawnsmartapp.com</text>
+  
+  <!-- Route53 -->
+  <rect x="250" y="120" width="120" height="80" rx="10" fill="#FF9900" filter="url(#shadow)"/>
+  <text x="310" y="145" text-anchor="middle" fill="white" font-family="Arial, sans-serif" font-size="12" font-weight="bold">Route53</text>
+  <text x="310" y="165" text-anchor="middle" fill="white" font-family="Arial, sans-serif" font-size="11">DNS</text>
+  <text x="310" y="180" text-anchor="middle" fill="white" font-family="Arial, sans-serif" font-size="10">A/CNAME Records</text>
+  
+  <!-- ACM Certificate -->
+  <rect x="250" y="250" width="120" height="80" rx="10" fill="#FF4B4B" filter="url(#shadow)"/>
+  <text x="310" y="275" text-anchor="middle" fill="white" font-family="Arial, sans-serif" font-size="12" font-weight="bold">ACM</text>
+  <text x="310" y="295" text-anchor="middle" fill="white" font-family="Arial, sans-serif" font-size="11">SSL Certificate</text>
+  <text x="310" y="310" text-anchor="middle" fill="white" font-family="Arial, sans-serif" font-size="10">DNS Validation</text>
+  
+  <!-- CloudFront -->
+  <rect x="450" y="120" width="120" height="80" rx="10" fill="#FF9900" filter="url(#shadow)"/>
+  <text x="510" y="145" text-anchor="middle" fill="white" font-family="Arial, sans-serif" font-size="12" font-weight="bold">CloudFront</text>
+  <text x="510" y="165" text-anchor="middle" fill="white" font-family="Arial, sans-serif" font-size="11">CDN</text>
+  <text x="510" y="180" text-anchor="middle" fill="white" font-family="Arial, sans-serif" font-size="10">Origin Groups</text>
+  
+  <!-- Origin Access Control -->
+  <rect x="450" y="250" width="120" height="80" rx="10" fill="#FF9900" filter="url(#shadow)"/>
+  <text x="510" y="275" text-anchor="middle" fill="white" font-family="Arial, sans-serif" font-size="12" font-weight="bold">OAC</text>
+  <text x="510" y="295" text-anchor="middle" fill="white" font-family="Arial, sans-serif" font-size="11">Origin Access</text>
+  <text x="510" y="310" text-anchor="middle" fill="white" font-family="Arial, sans-serif" font-size="10">Control</text>
+  
+  <!-- Primary Region (us-east-1) -->
+  <rect x="650" y="90" width="300" height="280" rx="15" fill="#E8F4FD" stroke="#4A90E2" stroke-width="2" filter="url(#shadow)"/>
+  <text x="800" y="115" text-anchor="middle" fill="#4A90E2" font-family="Arial, sans-serif" font-size="14" font-weight="bold">Primary Region (us-east-1)</text>
+  
+  <!-- Primary S3 Bucket -->
+  <rect x="680" y="140" width="120" height="80" rx="10" fill="#3F8A3F" filter="url(#shadow)"/>
+  <text x="740" y="165" text-anchor="middle" fill="white" font-family="Arial, sans-serif" font-size="12" font-weight="bold">S3 Primary</text>
+  <text x="740" y="185" text-anchor="middle" fill="white" font-family="Arial, sans-serif" font-size="11">www.site.com</text>
+  <text x="740" y="200" text-anchor="middle" fill="white" font-family="Arial, sans-serif" font-size="10">Static Website</text>
+  
+  <!-- S3 Logs Bucket -->
+  <rect x="820" y="140" width="120" height="80" rx="10" fill="#3F8A3F" filter="url(#shadow)"/>
+  <text x="880" y="165" text-anchor="middle" fill="white" font-family="Arial, sans-serif" font-size="12" font-weight="bold">S3 Logs</text>
+  <text x="880" y="185" text-anchor="middle" fill="white" font-family="Arial, sans-serif" font-size="11">Access Logs</text>
+  <text x="880" y="200" text-anchor="middle" fill="white" font-family="Arial, sans-serif" font-size="10">Lifecycle Policy</text>
+  
+  <!-- IAM Role -->
+  <rect x="680" y="270" width="120" height="80" rx="10" fill="#FF4B4B" filter="url(#shadow)"/>
+  <text x="740" y="295" text-anchor="middle" fill="white" font-family="Arial, sans-serif" font-size="12" font-weight="bold">IAM Role</text>
+  <text x="740" y="315" text-anchor="middle" fill="white" font-family="Arial, sans-serif" font-size="11">Replication</text>
+  <text x="740" y="330" text-anchor="middle" fill="white" font-family="Arial, sans-serif" font-size="10">Cross-Region</text>
+  
+  <!-- Secondary Region (us-west-1) -->
+  <rect x="1020" y="90" width="300" height="280" rx="15" fill="#FFF2E8" stroke="#FF9900" stroke-width="2" filter="url(#shadow)"/>
+  <text x="1170" y="115" text-anchor="middle" fill="#FF9900" font-family="Arial, sans-serif" font-size="14" font-weight="bold">Secondary Region (us-west-1)</text>
+  
+  <!-- Secondary S3 Bucket -->
+  <rect x="1050" y="140" width="120" height="80" rx="10" fill="#3F8A3F" filter="url(#shadow)"/>
+  <text x="1110" y="165" text-anchor="middle" fill="white" font-family="Arial, sans-serif" font-size="12" font-weight="bold">S3 Failover</text>
+  <text x="1110" y="185" text-anchor="middle" fill="white" font-family="Arial, sans-serif" font-size="11">Secondary</text>
+  <text x="1110" y="200" text-anchor="middle" fill="white" font-family="Arial, sans-serif" font-size="10">Replica</text>
+  
+  <!-- Security Features Box -->
+  <rect x="50" y="420" width="1300" height="120" rx="15" fill="#F0F8FF" stroke="#4A90E2" stroke-width="2" filter="url(#shadow)"/>
+  <text x="700" y="445" text-anchor="middle" fill="#4A90E2" font-family="Arial, sans-serif" font-size="16" font-weight="bold">Security &amp; Performance Features</text>
+  
+  <text x="80" y="470" fill="#333" font-family="Arial, sans-serif" font-size="12" font-weight="bold">Security:</text>
+  <text x="80" y="490" fill="#333" font-family="Arial, sans-serif" font-size="11">• S3 Bucket Policies with CloudFront OAC</text>
+  <text x="80" y="505" fill="#333" font-family="Arial, sans-serif" font-size="11">• SSL/TLS Certificate (ACM)</text>
+  <text x="80" y="520" fill="#333" font-family="Arial, sans-serif" font-size="11">• Security Headers Policy</text>
+  
+  <text x="420" y="470" fill="#333" font-family="Arial, sans-serif" font-size="12" font-weight="bold">Performance:</text>
+  <text x="420" y="490" fill="#333" font-family="Arial, sans-serif" font-size="11">• CloudFront Edge Caching</text>
+  <text x="420" y="505" fill="#333" font-family="Arial, sans-serif" font-size="11">• Intelligent Tiering</text>
+  <text x="420" y="520" fill="#333" font-family="Arial, sans-serif" font-size="11">• HTTP/2 &amp; HTTP/3</text>
+  
+  <text x="720" y="470" fill="#333" font-family="Arial, sans-serif" font-size="12" font-weight="bold">Reliability:</text>
+  <text x="720" y="490" fill="#333" font-family="Arial, sans-serif" font-size="11">• Multi-Region Failover</text>
+  <text x="720" y="505" fill="#333" font-family="Arial, sans-serif" font-size="11">• Cross-Region Replication</text>
+  <text x="720" y="520" fill="#333" font-family="Arial, sans-serif" font-size="11">• S3 Versioning</text>
+  
+  <text x="1020" y="470" fill="#333" font-family="Arial, sans-serif" font-size="12" font-weight="bold">Monitoring:</text>
+  <text x="1020" y="490" fill="#333" font-family="Arial, sans-serif" font-size="11">• CloudFront Access Logs</text>
+  <text x="1020" y="505" fill="#333" font-family="Arial, sans-serif" font-size="11">• S3 Access Logging</text>
+  <text x="1020" y="520" fill="#333" font-family="Arial, sans-serif" font-size="11">• Log Lifecycle Management</text>
+  
+  <!-- Data Flow Arrows -->
+  <!-- Users to Route53 -->
+  <path d="M 170 160 L 240 160" stroke="#4A90E2" stroke-width="2" fill="none" marker-end="url(#arrowhead)"/>
+  <text x="205" y="155" text-anchor="middle" fill="#4A90E2" font-family="Arial, sans-serif" font-size="10">DNS Query</text>
+  
+  <!-- Route53 to CloudFront -->
+  <path d="M 370 160 L 440 160" stroke="#4A90E2" stroke-width="2" fill="none" marker-end="url(#arrowhead)"/>
+  <text x="405" y="155" text-anchor="middle" fill="#4A90E2" font-family="Arial, sans-serif" font-size="10">ALIAS</text>
+  
+  <!-- ACM to CloudFront -->
+  <path d="M 370 290 Q 410 250 450 210" stroke="#FF4B4B" stroke-width="2" fill="none" marker-end="url(#arrowhead)"/>
+  <text x="400" y="240" text-anchor="middle" fill="#FF4B4B" font-family="Arial, sans-serif" font-size="10">SSL</text>
+  
+  <!-- CloudFront to Primary S3 -->
+  <path d="M 570 160 L 670 160" stroke="#FF9900" stroke-width="2" fill="none" marker-end="url(#arrowhead)"/>
+  <text x="620" y="155" text-anchor="middle" fill="#FF9900" font-family="Arial, sans-serif" font-size="10">Primary Origin</text>
+  
+  <!-- CloudFront to Secondary S3 (Failover) -->
+  <path d="M 570 180 Q 795 250 1040 180" stroke="#FF6B6B" stroke-width="2" fill="none" marker-end="url(#arrowhead)" stroke-dasharray="5,5"/>
+  <text x="805" y="235" text-anchor="middle" fill="#FF6B6B" font-family="Arial, sans-serif" font-size="10">Failover Origin</text>
+  
+  <!-- Primary to Secondary S3 Replication -->
+  <path d="M 800 180 L 1040 180" stroke="#3F8A3F" stroke-width="2" fill="none" marker-end="url(#arrowhead)"/>
+  <text x="920" y="175" text-anchor="middle" fill="#3F8A3F" font-family="Arial, sans-serif" font-size="10">Cross-Region Replication</text>
+  
+  <!-- Primary S3 to Logs -->
+  <path d="M 800 170 L 820 170" stroke="#3F8A3F" stroke-width="2" fill="none" marker-end="url(#arrowhead)"/>
+  <text x="810" y="165" text-anchor="middle" fill="#3F8A3F" font-family="Arial, sans-serif" font-size="9">Logs</text>
+  
+  <!-- IAM Role to Replication -->
+  <path d="M 800 310 Q 920 280 1040 200" stroke="#FF4B4B" stroke-width="2" fill="none" marker-end="url(#arrowhead)"/>
+  <text x="920" y="260" text-anchor="middle" fill="#FF4B4B" font-family="Arial, sans-serif" font-size="10">Assumes Role</text>
+  
+  <!-- OAC to S3 buckets -->
+  <path d="M 570 290 Q 620 240 670 200" stroke="#FF9900" stroke-width="2" fill="none" marker-end="url(#arrowhead)"/>
+  <path d="M 570 290 Q 805 320 1040 200" stroke="#FF9900" stroke-width="2" fill="none" marker-end="url(#arrowhead)"/>
+  
+  <!-- Data Flow Legend -->
+  <rect x="50" y="580" width="1300" height="80" rx="10" fill="#F8F9FA" stroke="#DEE2E6" stroke-width="1"/>
+  <text x="700" y="605" text-anchor="middle" fill="#333" font-family="Arial, sans-serif" font-size="14" font-weight="bold">Data Flow</text>
+  
+  <line x1="100" y1="625" x2="130" y2="625" stroke="#4A90E2" stroke-width="2" marker-end="url(#arrowhead)"/>
+  <text x="140" y="630" fill="#333" font-family="Arial, sans-serif" font-size="11">User Request Flow</text>
+  
+  <line x1="300" y1="625" x2="330" y2="625" stroke="#FF9900" stroke-width="2" marker-end="url(#arrowhead)"/>
+  <text x="340" y="630" fill="#333" font-family="Arial, sans-serif" font-size="11">Content Delivery</text>
+  
+  <line x1="500" y1="625" x2="530" y2="625" stroke="#3F8A3F" stroke-width="2" marker-end="url(#arrowhead)"/>
+  <text x="540" y="630" fill="#333" font-family="Arial, sans-serif" font-size="11">Data Replication</text>
+  
+  <line x1="700" y1="625" x2="730" y2="625" stroke="#FF6B6B" stroke-width="2" stroke-dasharray="5,5" marker-end="url(#arrowhead)"/>
+  <text x="740" y="630" fill="#333" font-family="Arial, sans-serif" font-size="11">Failover Path</text>
+  
+  <line x1="900" y1="625" x2="930" y2="625" stroke="#FF4B4B" stroke-width="2" marker-end="url(#arrowhead)"/>
+  <text x="940" y="630" fill="#333" font-family="Arial, sans-serif" font-size="11">Security/IAM</text>
+  
+  <!-- Cost Optimization Note -->
+  <text x="700" y="785" text-anchor="middle" fill="#666" font-family="Arial, sans-serif" font-size="12" font-style="italic">
+    Cost-optimized with S3 Intelligent Tiering, CloudFront PriceClass_200, and automated log lifecycle management
+  </text>
+  
+  <!-- Environment Label -->
+  <rect x="1200" y="20" width="180" height="30" rx="5" fill="#28A745"/>
+  <text x="1290" y="40" text-anchor="middle" fill="white" font-family="Arial, sans-serif" font-size="12" font-weight="bold">
+    Production Environment
+  </text>
+</svg>

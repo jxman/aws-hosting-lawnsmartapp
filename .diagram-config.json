@@ -1,0 +1,14 @@
+{
+  "aws_assets_path": "",
+  "default_environment": "dev",
+  "canvas": {
+    "width": 1400,
+    "height": 900
+  },
+  "icon_scale": 0.7,
+  "environments": ["dev", "staging", "prod"],
+  "output_format": "svg",
+  "include_environment_badges": true,
+  "show_data_flows": true,
+  "professional_styling": true
+}
