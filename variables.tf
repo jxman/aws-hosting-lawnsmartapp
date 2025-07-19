@@ -42,13 +42,13 @@ variable "github_repository" {
 locals {
   # Environment-specific domain logic
   site_domain = var.environment == "prod" ? var.base_domain : "${var.environment}.${var.base_domain}"
-  
+
   # Use provided site_name or computed domain
   actual_site_name = var.site_name != "" ? var.site_name : local.site_domain
-  
+
   # Consistent resource naming pattern
   resource_prefix = "${var.environment}-lawnsmartapp"
-  
+
   common_tags = {
     Environment = var.environment
     Project     = "lawnsmartapp-website"

@@ -21,7 +21,7 @@ resource "aws_s3_bucket" "logs" {
   bucket        = "${var.resource_prefix}-site-logs"
   force_destroy = true
   tags          = merge(var.tags, { Name = "${var.resource_prefix}-site-logs" })
-  
+
   depends_on = [null_resource.empty_logs_bucket]
 }
 
@@ -93,7 +93,7 @@ resource "aws_s3_bucket" "www_site" {
   bucket        = "www.${var.site_name}"
   force_destroy = true
   tags          = merge(var.tags, { Name = "www.${var.site_name}" })
-  
+
   depends_on = [null_resource.empty_www_bucket]
 }
 
@@ -173,7 +173,7 @@ resource "aws_s3_bucket" "destination" {
   bucket        = "${var.resource_prefix}-secondary"
   force_destroy = true
   tags          = merge(var.tags, { Name = "${var.resource_prefix}-secondary" })
-  
+
   depends_on = [null_resource.empty_destination_bucket]
 }
 
@@ -249,7 +249,7 @@ resource "null_resource" "cleanup_replication_role" {
       echo "Instance profile cleanup completed for role ${self.triggers.role_name}"
     EOT
   }
-  
+
   depends_on = [aws_iam_role.replication]
 }
 
