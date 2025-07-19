@@ -213,6 +213,7 @@ resource "aws_iam_policy" "github_actions_policy" {
           "iam:ListRoleTags",
           "iam:ListRolePolicies",
           "iam:ListPolicyVersions",
+          "iam:DeletePolicyVersion",
           "iam:ListInstanceProfilesForRole",
           "iam:TagPolicy",
           "iam:UntagPolicy",
