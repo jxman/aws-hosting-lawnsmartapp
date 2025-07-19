@@ -9,8 +9,15 @@ resource "aws_acm_certificate" "cert" {
   }
 }
 
+# Extract root domain for hosted zone lookup
+# For dev.lawnsmartapp.com -> lawnsmartapp.com
+# For lawnsmartapp.com -> lawnsmartapp.com
+locals {
+  root_domain = length(split(".", var.site_name)) > 2 ? join(".", slice(split(".", var.site_name), -2, length(split(".", var.site_name)))) : var.site_name
+}
+
 data "aws_route53_zone" "cert" {
-  name         = var.site_name
+  name         = local.root_domain
   private_zone = false
 }
 
