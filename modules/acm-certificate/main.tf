@@ -13,7 +13,7 @@ resource "aws_acm_certificate" "cert" {
 # For dev.lawnsmartapp.com -> lawnsmartapp.com
 # For lawnsmartapp.com -> lawnsmartapp.com
 locals {
-  root_domain = length(split(".", var.site_name)) > 2 ? join(".", slice(split(".", var.site_name), -2, length(split(".", var.site_name)))) : var.site_name
+  root_domain = length(split(".", var.site_name)) > 2 ? join(".", slice(split(".", var.site_name), length(split(".", var.site_name)) - 2, length(split(".", var.site_name)))) : var.site_name
 }
 
 data "aws_route53_zone" "cert" {
