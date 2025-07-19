@@ -55,6 +55,11 @@ resource "aws_iam_policy" "github_actions_policy" {
   name        = "GithubActions-${var.project_name}-Policy"
   description = "Least privilege policy for GitHub Actions deployment of ${var.project_name}"
 
+  # Prevent tagging conflicts during policy updates
+  lifecycle {
+    ignore_changes = [tags]
+  }
+
   policy = jsonencode({
     Version = "2012-10-17"
     Statement = [

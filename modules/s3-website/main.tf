@@ -1,8 +1,28 @@
+# Null resource to empty logs bucket before deletion
+resource "null_resource" "empty_logs_bucket" {
+  triggers = {
+    bucket_name = "${var.site_name}-site-logs"
+  }
+
+  provisioner "local-exec" {
+    when    = destroy
+    command = <<-EOT
+      echo "Emptying S3 bucket ${self.triggers.bucket_name}..."
+      aws s3 rm s3://${self.triggers.bucket_name} --recursive || true
+      aws s3api delete-objects --bucket ${self.triggers.bucket_name} --delete "$(aws s3api list-object-versions --bucket ${self.triggers.bucket_name} --output json --query '{Objects: Versions[].{Key:Key,VersionId:VersionId}}' 2>/dev/null)" || true
+      aws s3api delete-objects --bucket ${self.triggers.bucket_name} --delete "$(aws s3api list-object-versions --bucket ${self.triggers.bucket_name} --output json --query '{Objects: DeleteMarkers[].{Key:Key,VersionId:VersionId}}' 2>/dev/null)" || true
+      echo "Bucket ${self.triggers.bucket_name} emptied."
+    EOT
+  }
+}
+
 # Logs bucket
 resource "aws_s3_bucket" "logs" {
   bucket        = "${var.site_name}-site-logs"
   force_destroy = true
   tags          = merge(var.tags, { Name = "${var.site_name}-site-logs" })
+  
+  depends_on = [null_resource.empty_logs_bucket]
 }
 
 resource "aws_s3_bucket_ownership_controls" "logs" {
@@ -50,11 +70,31 @@ resource "aws_s3_bucket_public_access_block" "logs" {
   restrict_public_buckets = true
 }
 
+# Null resource to empty main website bucket before deletion
+resource "null_resource" "empty_www_bucket" {
+  triggers = {
+    bucket_name = "www.${var.site_name}"
+  }
+
+  provisioner "local-exec" {
+    when    = destroy
+    command = <<-EOT
+      echo "Emptying S3 bucket ${self.triggers.bucket_name}..."
+      aws s3 rm s3://${self.triggers.bucket_name} --recursive || true
+      aws s3api delete-objects --bucket ${self.triggers.bucket_name} --delete "$(aws s3api list-object-versions --bucket ${self.triggers.bucket_name} --output json --query '{Objects: Versions[].{Key:Key,VersionId:VersionId}}' 2>/dev/null)" || true
+      aws s3api delete-objects --bucket ${self.triggers.bucket_name} --delete "$(aws s3api list-object-versions --bucket ${self.triggers.bucket_name} --output json --query '{Objects: DeleteMarkers[].{Key:Key,VersionId:VersionId}}' 2>/dev/null)" || true
+      echo "Bucket ${self.triggers.bucket_name} emptied."
+    EOT
+  }
+}
+
 # Primary website bucket
 resource "aws_s3_bucket" "www_site" {
   bucket        = "www.${var.site_name}"
   force_destroy = true
   tags          = merge(var.tags, { Name = "www.${var.site_name}" })
+  
+  depends_on = [null_resource.empty_www_bucket]
 }
 
 resource "aws_s3_bucket_versioning" "www_site" {
@@ -109,12 +149,32 @@ resource "aws_s3_bucket_public_access_block" "www_site" {
   restrict_public_buckets = true
 }
 
+# Null resource to empty secondary bucket before deletion
+resource "null_resource" "empty_destination_bucket" {
+  triggers = {
+    bucket_name = "www.${var.site_name}-secondary"
+  }
+
+  provisioner "local-exec" {
+    when    = destroy
+    command = <<-EOT
+      echo "Emptying S3 bucket ${self.triggers.bucket_name} in us-west-1..."
+      aws s3 rm s3://${self.triggers.bucket_name} --recursive --region us-west-1 || true
+      aws s3api delete-objects --bucket ${self.triggers.bucket_name} --region us-west-1 --delete "$(aws s3api list-object-versions --bucket ${self.triggers.bucket_name} --region us-west-1 --output json --query '{Objects: Versions[].{Key:Key,VersionId:VersionId}}' 2>/dev/null)" || true
+      aws s3api delete-objects --bucket ${self.triggers.bucket_name} --region us-west-1 --delete "$(aws s3api list-object-versions --bucket ${self.triggers.bucket_name} --region us-west-1 --output json --query '{Objects: DeleteMarkers[].{Key:Key,VersionId:VersionId}}' 2>/dev/null)" || true
+      echo "Bucket ${self.triggers.bucket_name} emptied."
+    EOT
+  }
+}
+
 # Failover bucket (secondary region)
 resource "aws_s3_bucket" "destination" {
   provider      = aws.west
   bucket        = "www.${var.site_name}-secondary"
   force_destroy = true
   tags          = merge(var.tags, { Name = "www.${var.site_name}-secondary" })
+  
+  depends_on = [null_resource.empty_destination_bucket]
 }
 
 resource "aws_s3_bucket_versioning" "destination" {
@@ -150,6 +210,27 @@ resource "aws_s3_bucket_public_access_block" "destination" {
 
 
 
+# Null resource to clean up any instance profile associations before deleting IAM role
+resource "null_resource" "cleanup_replication_role" {
+  triggers = {
+    role_name = "tf-iam-role-replication-${var.site_name}"
+  }
+
+  provisioner "local-exec" {
+    when    = destroy
+    command = <<-EOT
+      echo "Cleaning up instance profiles for role ${self.triggers.role_name}..."
+      # List and remove role from any instance profiles
+      INSTANCE_PROFILES=$(aws iam list-instance-profiles-for-role --role-name ${self.triggers.role_name} --query 'InstanceProfiles[].InstanceProfileName' --output text 2>/dev/null || true)
+      for profile in $INSTANCE_PROFILES; do
+        echo "Removing role ${self.triggers.role_name} from instance profile $profile"
+        aws iam remove-role-from-instance-profile --instance-profile-name $profile --role-name ${self.triggers.role_name} || true
+      done
+      echo "Instance profile cleanup completed for role ${self.triggers.role_name}"
+    EOT
+  }
+}
+
 # IAM Role for replication
 resource "aws_iam_role" "replication" {
   name = "tf-iam-role-replication-${var.site_name}"
@@ -168,6 +249,8 @@ resource "aws_iam_role" "replication" {
   })
 
   tags = var.tags
+  
+  depends_on = [null_resource.cleanup_replication_role]
 }
 
 # IAM Policy for replication
