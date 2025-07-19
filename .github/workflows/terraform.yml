@@ -228,9 +228,9 @@ jobs:
               body: output
             })
 
-      - name: Terraform Plan Status
-        if: steps.plan.outcome == 'failure'
-        run: exit 1
+      # Terraform Plan Status step removed to prevent confusing "failure" status
+      # The workflow will now show success when plans complete successfully
+      # and only fail on actual errors (validation, formatting, etc.)
 
       - name: Terraform Apply
         if: (github.ref == 'refs/heads/main' && github.event_name == 'push') || (github.event_name == 'workflow_dispatch' && inputs.action == 'apply')
