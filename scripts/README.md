@@ -1,6 +1,8 @@
 # AWS Architecture Diagram Automation Scripts
 
-This directory contains automation scripts for generating professional AWS architecture diagrams from Terraform projects using Claude Code, plus deployment scripts for different environments.
+**🔐 Security Policy: Local deployment scripts have been deprecated. All infrastructure deployments now use GitHub Actions with OIDC authentication.**
+
+This directory contains automation scripts for generating professional AWS architecture diagrams from Terraform projects using Claude Code.
 
 ## Architecture Diagram Generation
 
@@ -144,9 +146,7 @@ your-project/
 │   ├── cloudfront/
 │   └── route53/
 ├── environments/             # Environment-specific configs
-│   ├── dev/
-│   ├── staging/
-│   └── prod/
+│   └── prod/                 # Production configuration only
 ├── scripts/                  # Automation scripts (copied)
 │   ├── generate-architecture-diagram.sh
 │   ├── claude-automation.sh
@@ -174,153 +174,103 @@ Example customization:
       "description": "Serverless functions"
     }
   },
-  "environments": ["dev", "test", "staging", "prod"],
-  "default_environment": "dev"
+  "environments": ["prod"],
+  "default_environment": "prod"
 }
 ```
 
-## Deployment Scripts
+## Deprecated: Local Deployment Scripts
 
-### Unified Deployment Script (Recommended)
+**⚠️ DEPRECATED: Local deployment scripts have been archived and are no longer supported.**
+
+### Current Deployment Method (GitHub Actions)
+
+All infrastructure deployments now use GitHub Actions with OIDC authentication:
+
 ```bash
-./deploy.sh <environment> [command] [options]
+# Deploy infrastructure changes
+gh workflow run "Terraform Deployment" --ref main
 
-# Examples:
-./deploy.sh dev plan              # Plan development changes
-./deploy.sh staging apply         # Deploy to staging
-./deploy.sh prod apply            # Deploy to production
+# Monitor deployment status
+gh run list --limit 5
+gh run view [RUN_ID] --web
 ```
 
-### Legacy Environment-Specific Scripts
+### Why GitHub Actions?
+
+- ✅ **OIDC Authentication**: Secure AWS access without stored credentials
+- ✅ **Audit Trail**: Complete deployment history and logging
+- ✅ **Consistency**: Standardized deployment environment
+- ✅ **Team Visibility**: All deployments tracked and visible
+- ✅ **Best Practices**: Infrastructure deployed through CI/CD
+
+### Archived Scripts Location
+
+Previous local deployment scripts have been moved to:
+- **Location**: `../archived/local-deployment-scripts/`
+- **Status**: DEPRECATED - Use GitHub Actions instead
+- **Documentation**: See `../archived/README.md`
+
+## Local Development Commands
+
+For local development and testing (read-only operations only):
+
 ```bash
-./deploy-prod.sh [plan|apply|destroy]    # Production deployment
-./deploy-dev.sh [plan|apply|destroy]     # Development deployment  
-./deploy-staging.sh [plan|apply|destroy] # Staging deployment
+# Format and validate Terraform
+terraform fmt -recursive
+terraform validate
+
+# Preview changes (requires AWS credentials)
+terraform plan
+
+# Check syntax and formatting
+terraform fmt -check -recursive
 ```
-
-## Usage Examples
-
-### Plan Changes
-```bash
-# Plan changes for any environment
-./deploy.sh dev plan
-./deploy.sh staging plan
-./deploy.sh prod plan
-```
-
-### Deploy Changes
-```bash
-# Deploy to any environment
-./deploy.sh dev apply
-./deploy.sh staging apply
-./deploy.sh prod apply
-```
-
-### Destroy Environment
-```bash
-# Destroy any environment (requires confirmation)
-./deploy.sh dev destroy
-./deploy.sh staging destroy
-./deploy.sh prod destroy
-```
-
-## Features
-
-### Safety Features
-- ✅ **Prerequisites checking** - Validates Terraform, AWS CLI, and credentials
-- ✅ **Configuration validation** - Ensures all required files exist
-- ✅ **Environment isolation** - Uses environment-specific backend configs
-- ✅ **Confirmation prompts** - Prevents accidental deployments
-- ✅ **Clean initialization** - Removes stale .terraform directories
-- ✅ **Error handling** - Exits on any command failure
-
-### Production Safety
-- 🔒 **Strict confirmation** - Requires typing 'yes' to apply
-- 🔒 **Destruction protection** - Requires typing 'DELETE' in caps
-- 🔒 **Configuration display** - Shows what will be deployed
-- 🔒 **AWS account verification** - Displays target account
-
-### Development Convenience
-- 🚀 **Faster confirmations** - Simple y/N prompts
-- 🚀 **Less strict validation** - Easier to iterate quickly
-- 🚀 **Clear environment labeling** - Obvious when in dev mode
-
-## What Each Script Does
-
-### 1. Prerequisites Check
-- Verifies Terraform installation
-- Verifies AWS CLI installation  
-- Checks for backend configuration files
-- Checks for variable files
-- Validates AWS credentials
-
-### 2. Configuration Display
-- Shows target environment
-- Shows backend configuration file
-- Shows variables file
-- Shows AWS account ID
-- Shows AWS region
-
-### 3. Terraform Operations
-- Clean initialization with environment-specific backend
-- Configuration validation
-- Plan generation with environment variables
-- Safe apply with confirmation
-- Automatic CloudFront cache invalidation
-- Resource output display
-
-### 4. Post-Deployment
-- Shows Terraform outputs
-- Invalidates CloudFront cache automatically
-- Cleans up temporary plan files
-
-## Error Handling
-
-The scripts will exit with appropriate error messages if:
-- Required tools are not installed
-- Configuration files are missing
-- AWS credentials are invalid
-- Terraform commands fail
-- User cancels operations
 
 ## Security Considerations
 
-### Production Script
-- Requires explicit 'yes' confirmation for apply
-- Requires typing 'DELETE' in capitals for destroy
-- Shows warning messages about production impact
-- Displays AWS account for verification
+### GitHub Actions Security (Current)
+- 🔐 **OIDC Authentication**: No stored AWS credentials
+- 🔐 **Repository Isolation**: IAM trust policy restricted to specific repository
+- 🔐 **Least Privilege**: IAM permissions scoped to required resources
+- 🔐 **Audit Trail**: All deployments logged in GitHub Actions and CloudTrail
 
-### Development Script  
-- Uses simpler y/N confirmations
-- Less strict destruction requirements
-- Still validates credentials and configuration
-- Clear labeling as development environment
+### Deprecated Local Scripts (Archived)
+- ⚠️ **Security Risk**: Required local AWS credentials
+- ⚠️ **No Audit Trail**: Local deployments not centrally logged
+- ⚠️ **Inconsistent Environment**: Different deployment environments across team
+- ⚠️ **No Team Visibility**: Deployments not visible to team members
 
-## Customization
+## Integration with GitHub Actions
 
-### Adding New Environments
-To add a staging deployment script:
-
-1. Copy `deploy-dev.sh` to `deploy-staging.sh`
-2. Change `ENVIRONMENT="dev"` to `ENVIRONMENT="staging"`
-3. Update script title and messages
-4. Make executable: `chmod +x deploy-staging.sh`
-
-### Modifying Confirmation Requirements
-Edit the confirmation prompts in the `terraform_apply()` and `terraform_destroy()` functions to match your security requirements.
-
-## Integration with CI/CD
-
-These scripts can be called from CI/CD pipelines:
+The current GitHub Actions workflow provides:
 
 ```yaml
-# GitHub Actions example
-- name: Deploy to Production
-  run: ./deploy-prod.sh apply
-  env:
-    AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-    AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+# Example GitHub Actions usage (automated)
+name: Terraform Deployment
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  terraform:
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::ACCOUNT:role/GithubActionsOIDC-LawnSmartApp-Role
+          aws-region: us-east-1
+      - name: Deploy Infrastructure
+        run: |
+          terraform init
+          terraform plan
+          terraform apply -auto-approve
 ```
 
-However, for production use, the GitHub Actions workflow is recommended as it provides better logging, approval workflows, and integration with PR processes.
+For more details, see the [DEPLOYMENT_GUIDE.md](../DEPLOYMENT_GUIDE.md).

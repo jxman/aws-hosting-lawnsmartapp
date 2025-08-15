@@ -13,15 +13,6 @@ on:
       - ".github/workflows/terraform.yml"
   workflow_dispatch: # Allow manual triggering
     inputs:
-      environment:
-        description: 'Environment to deploy to'
-        required: true
-        default: 'dev'
-        type: choice
-        options:
-        - dev
-        - staging
-        - prod
       action:
         description: 'Terraform action to perform'
         required: true
@@ -46,8 +37,8 @@ jobs:
     runs-on: ubuntu-latest
 
     env:
-      # Environment configuration - dev for automatic, manual input for workflow_dispatch
-      ENVIRONMENT: ${{ github.event_name == 'workflow_dispatch' && inputs.environment || 'dev' }}
+      # Production-only deployment configuration
+      ENVIRONMENT: prod
 
     steps:
       - name: Checkout Repository
@@ -71,7 +62,7 @@ jobs:
         run: |
           echo "=== Checking existing state file location ==="
           STATE_BUCKET="lawnsmartapp-terraform-state"
-          STATE_KEY="${ENVIRONMENT}/terraform.tfstate"
+          STATE_KEY="lawnsmartapp-com/terraform.tfstate"
           
           echo "Environment: $ENVIRONMENT"
           echo "Looking for state file at: $STATE_BUCKET/$STATE_KEY"
@@ -89,9 +80,9 @@ jobs:
 
       - name: Create Terraform State Infrastructure
         run: |
-          # Unified state infrastructure for all environments
+          # Production state infrastructure
           STATE_BUCKET="lawnsmartapp-terraform-state"
-          LOCK_TABLE="lawnsmartapp-terraform-locks"
+          LOCK_TABLE="terraform-locks"
           
           echo "🎯 Environment: $ENVIRONMENT"
           echo "📦 State bucket: $STATE_BUCKET"
@@ -144,12 +135,10 @@ jobs:
 
       - name: Terraform Init
         id: init
-        env:
-          ENVIRONMENT: ${{ env.ENVIRONMENT }}
         run: |
-          echo "Initializing Terraform with environment-specific backend configuration..."
+          echo "Initializing Terraform with production backend configuration..."
           echo "Environment: $ENVIRONMENT"
-          terraform init -backend-config=backend-configs/${ENVIRONMENT}.conf -reconfigure
+          terraform init -backend-config=environments/prod/backend.conf -reconfigure
 
       - name: Verify State After Init
         run: |
@@ -169,12 +158,10 @@ jobs:
 
       - name: Terraform Plan
         id: plan
-        env:
-          ENVIRONMENT: ${{ env.ENVIRONMENT }}
         run: |
-          echo "Running Terraform plan for environment: $ENVIRONMENT"
+          echo "Running Terraform plan for production environment"
           terraform plan \
-            -var-file=environments/${ENVIRONMENT}/terraform.tfvars \
+            -var-file=environments/prod/terraform.tfvars \
             -input=false \
             -no-color \
             -out=tfplan
@@ -226,7 +213,7 @@ jobs:
       - name: Terraform Apply
         if: (github.ref == 'refs/heads/main' && github.event_name == 'push') || (github.event_name == 'workflow_dispatch' && inputs.action == 'apply')
         run: |
-          echo "🚀 Applying Terraform changes to $ENVIRONMENT environment"
+          echo "🚀 Applying Terraform changes to production environment"
           terraform apply \
             -auto-approve \
             -input=false \
