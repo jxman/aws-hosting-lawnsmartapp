@@ -60,8 +60,8 @@ cd /path/to/your/new/project
 # Generate architecture diagram for production environment
 ./scripts/generate-architecture-diagram.sh -a ~/.aws-architecture-icons -e prod
 
-# Or use default environment (dev)
-./scripts/generate-architecture-diagram.sh -a ~/.aws-architecture-icons
+# Generate for production environment
+./scripts/generate-architecture-diagram.sh -a ~/.aws-architecture-icons -e prod
 ```
 
 ### Quick Start (Existing Setup)
@@ -87,7 +87,7 @@ If you've already set up the icons and scripts:
 
 Options:
   -a, --assets PATH     Path to AWS Architecture Icons directory (required)
-  -e, --env ENVIRONMENT Target environment (dev/staging/prod) [default: dev]
+  -e, --env ENVIRONMENT Target environment (prod) [default: prod]
   -c, --config FILE     Custom configuration file [default: .diagram-config.json]
   -o, --output FILE     Output SVG file path [default: architecture-diagram.svg]
   -h, --help            Show help message
