@@ -29,13 +29,7 @@ output "cloudfront_distribution_id" {
   sensitive   = false
 }
 
-# GitHub OIDC outputs for CI/CD reference
-output "github_actions_role_arn" {
-  description = "ARN of the IAM role for GitHub Actions"
-  value       = module.github_oidc.github_actions_role_arn
-}
-
-output "github_actions_role_name" {
-  description = "Name of the IAM role for GitHub Actions"
-  value       = module.github_oidc.github_actions_role_name
-}
+# GitHub OIDC resources are managed by scripts/bootstrap-oidc.sh
+# To get OIDC resource ARNs, use AWS CLI:
+# aws iam get-role --role-name GithubActionsOIDC-LawnSmartApp-Role --query 'Role.Arn'
+# aws iam list-open-id-connect-providers | grep token.actions.githubusercontent.com
