@@ -144,11 +144,33 @@ The deployment uses **OpenID Connect (OIDC)** for secure AWS authentication:
 - 📝 **Complete Audit Trail**: All deployments logged in CloudTrail
 - 🔒 **Least Privilege**: IAM permissions scoped to required resources
 
-#### IAM Resources
+#### IAM Resources (Managed by Bootstrap Script)
 - **Role**: `GithubActionsOIDC-LawnSmartApp-Role`
 - **Policy**: `GithubActions-LawnSmartApp-Policy`
 - **Trust Policy**: Restricted to `jxman/aws-hosting-lawnsmartapp` repository
 - **OIDC Provider**: `token.actions.githubusercontent.com`
+
+**IMPORTANT:** OIDC resources are managed by `scripts/bootstrap-oidc.sh`, NOT by Terraform. This ensures:
+- Consistent OIDC management across all projects
+- Full control over resource tags
+- No Terraform state conflicts with authentication infrastructure
+
+#### Initial OIDC Setup (One-Time)
+
+If setting up a new environment or updating OIDC resources:
+
+```bash
+# Run bootstrap script (idempotent - safe to run multiple times)
+bash scripts/bootstrap-oidc.sh
+```
+
+The script will:
+- Create OIDC provider if it doesn't exist
+- Create IAM role and policy if they don't exist
+- Update tags to match organizational standards
+- Verify all resources are properly configured
+
+**See:** `MIGRATION-OIDC-TO-BOOTSTRAP.md` for details on the bootstrap approach.
 
 ### Deployment Security Checks
 

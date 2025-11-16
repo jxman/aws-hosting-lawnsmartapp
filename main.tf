@@ -1,15 +1,9 @@
 # Data source to get current AWS account info
 data "aws_caller_identity" "current" {}
 
-# GitHub OIDC Module for secure CI/CD
-module "github_oidc" {
-  source = "./modules/github-oidc"
-
-  project_name      = "LawnSmartApp"
-  github_repository = var.github_repository
-  aws_account_id    = data.aws_caller_identity.current.account_id
-  tags              = local.common_tags
-}
+# GitHub OIDC resources are managed by scripts/bootstrap-oidc.sh
+# This ensures consistent OIDC management across all projects
+# Run: bash scripts/bootstrap-oidc.sh (one-time setup)
 
 # ACM Certificate Module
 module "acm_certificate" {
