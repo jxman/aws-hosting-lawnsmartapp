@@ -57,7 +57,7 @@ if [ -z "$OIDC_ARN" ]; then
         --thumbprint-list "6938fd4d98bab03faadb97b34396831e3780aea1" "1c58a3a8518e8759bf075b76b750d4f2df264fcd" \
         --tags \
             Key=Environment,Value=${ENVIRONMENT} \
-            Key=ManagedBy,Value=terraform \
+            Key=ManagedBy,Value=bootstrap-script \
             Key=Owner,Value="John Xanthopoulos" \
             Key=Project,Value=${PROJECT_NAME} \
             Key=Service,Value=${SERVICE_NAME} \
@@ -79,7 +79,7 @@ else
         --open-id-connect-provider-arn "${OIDC_ARN}" \
         --tags \
             Key=Environment,Value=${ENVIRONMENT} \
-            Key=ManagedBy,Value=terraform \
+            Key=ManagedBy,Value=bootstrap-script \
             Key=Owner,Value="John Xanthopoulos" \
             Key=Project,Value=${PROJECT_NAME} \
             Key=Service,Value=${SERVICE_NAME} \
@@ -207,7 +207,7 @@ EOF
         --policy-document file:///tmp/github-actions-policy.json \
         --tags \
             Key=Environment,Value=${ENVIRONMENT} \
-            Key=ManagedBy,Value=terraform \
+            Key=ManagedBy,Value=bootstrap-script \
             Key=Owner,Value="John Xanthopoulos" \
             Key=Project,Value=${PROJECT_NAME} \
             Key=Service,Value=${SERVICE_NAME} \
@@ -230,7 +230,7 @@ else
         --policy-arn "${POLICY_ARN}" \
         --tags \
             Key=Environment,Value=${ENVIRONMENT} \
-            Key=ManagedBy,Value=terraform \
+            Key=ManagedBy,Value=bootstrap-script \
             Key=Owner,Value="John Xanthopoulos" \
             Key=Project,Value=${PROJECT_NAME} \
             Key=Service,Value=${SERVICE_NAME} \
@@ -282,7 +282,7 @@ EOF
         --description "Role for GitHub Actions to manage LawnSmartApp website infrastructure" \
         --tags \
             Key=Environment,Value=${ENVIRONMENT} \
-            Key=ManagedBy,Value=terraform \
+            Key=ManagedBy,Value=bootstrap-script \
             Key=Owner,Value="John Xanthopoulos" \
             Key=Project,Value=${PROJECT_NAME} \
             Key=Service,Value=${SERVICE_NAME} \
@@ -313,7 +313,7 @@ else
         --role-name "${ROLE_NAME}" \
         --tags \
             Key=Environment,Value=${ENVIRONMENT} \
-            Key=ManagedBy,Value=terraform \
+            Key=ManagedBy,Value=bootstrap-script \
             Key=Owner,Value="John Xanthopoulos" \
             Key=Project,Value=${PROJECT_NAME} \
             Key=Service,Value=${SERVICE_NAME} \
@@ -350,7 +350,7 @@ echo -e "${GREEN}✓${NC} IAM Policy ARN:     ${POLICY_ARN}"
 echo ""
 echo -e "${BLUE}Resource Tags Applied:${NC}"
 echo -e "  Environment: ${ENVIRONMENT}"
-echo -e "  ManagedBy: terraform"
+echo -e "  ManagedBy: bootstrap-script"
 echo -e "  Owner: John Xanthopoulos"
 echo -e "  Project: ${PROJECT_NAME}"
 echo -e "  Service: ${SERVICE_NAME}"
