@@ -20,7 +20,10 @@ resource "null_resource" "empty_logs_bucket" {
 resource "aws_s3_bucket" "logs" {
   bucket        = "${var.resource_prefix}-site-logs"
   force_destroy = true
-  tags          = merge(var.tags, { Name = "${var.resource_prefix}-site-logs" })
+  tags = merge(var.tags, {
+    Name       = "${var.resource_prefix}-site-logs"
+    SubService = "access-logs-bucket"
+  })
 
   depends_on = [null_resource.empty_logs_bucket]
 }
@@ -92,7 +95,10 @@ resource "null_resource" "empty_www_bucket" {
 resource "aws_s3_bucket" "www_site" {
   bucket        = "www.${var.site_name}"
   force_destroy = true
-  tags          = merge(var.tags, { Name = "www.${var.site_name}" })
+  tags = merge(var.tags, {
+    Name       = "www.${var.site_name}"
+    SubService = "primary-website-bucket"
+  })
 
   depends_on = [null_resource.empty_www_bucket]
 }
@@ -172,7 +178,10 @@ resource "aws_s3_bucket" "destination" {
   provider      = aws.west
   bucket        = "${var.resource_prefix}-secondary"
   force_destroy = true
-  tags          = merge(var.tags, { Name = "${var.resource_prefix}-secondary" })
+  tags = merge(var.tags, {
+    Name       = "${var.resource_prefix}-secondary"
+    SubService = "failover-website-bucket"
+  })
 
   depends_on = [null_resource.empty_destination_bucket]
 }
@@ -227,7 +236,10 @@ resource "aws_iam_role" "replication" {
     ]
   })
 
-  tags = var.tags
+  tags = merge(var.tags, {
+    Name       = "${var.resource_prefix}-replication-role"
+    SubService = "s3-replication-role"
+  })
 }
 
 # Null resource to clean up any instance profile associations before deleting IAM role
@@ -289,6 +301,11 @@ resource "aws_iam_policy" "replication" {
         Resource = "${aws_s3_bucket.destination.arn}/*"
       }
     ]
+  })
+
+  tags = merge(var.tags, {
+    Name       = "${var.resource_prefix}-replication-policy"
+    SubService = "s3-replication-policy"
   })
 }
 

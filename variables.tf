@@ -51,9 +51,11 @@ locals {
 
   common_tags = {
     Environment = var.environment
-    Project     = "lawnsmartapp-website"
     ManagedBy   = "terraform"
-    Owner       = "johxan"
+    Owner       = "John Xanthopoulos"
+    Project     = "lawnsmartapp"
+    Service     = "lawnsmartapp-website"
+    GithubRepo  = "github.com/jxman/aws-hosting-lawnsmartapp"
     Site        = local.actual_site_name
     BaseProject = var.base_domain
   }
