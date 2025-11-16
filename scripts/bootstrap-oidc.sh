@@ -130,7 +130,10 @@ if [ -z "$POLICY_ARN" ]; then
     {
       "Effect": "Allow",
       "Action": [
-        "acm:*"
+        "acm:*",
+        "acm:AddTagsToCertificate",
+        "acm:RemoveTagsFromCertificate",
+        "acm:ListTagsForCertificate"
       ],
       "Resource": "*"
     },
