@@ -220,11 +220,18 @@ This project implements **best-practice OIDC authentication** with complete repo
 - ✅ **Repository Isolation**: Verified and secure
 - ✅ **Permission Model**: Complete with least privilege access
 
-#### Key Resources Created
+#### OIDC Resources Management
 - **IAM Role**: `GithubActionsOIDC-LawnSmartApp-Role`
-- **IAM Policy**: `GithubActions-LawnSmartApp-Policy` 
+- **IAM Policy**: `GithubActions-LawnSmartApp-Policy`
 - **OIDC Provider**: `token.actions.githubusercontent.com`
-- **Module Location**: `./modules/github-oidc/`
+- **Managed By**: `scripts/bootstrap-oidc.sh` (NOT Terraform)
+
+**To update OIDC resources or tags:**
+```bash
+bash scripts/bootstrap-oidc.sh
+```
+
+See `MIGRATION-OIDC-TO-BOOTSTRAP.md` for details on the bootstrap approach.
 
 ### Production Resources
 - **S3 Buckets:** `lawnsmartapp.com-site-logs`, `www.lawnsmartapp.com`, `prod-lawnsmartapp-secondary`
@@ -239,6 +246,88 @@ This project implements **best-practice OIDC authentication** with complete repo
 - ✅ **Least Privilege Permissions**: IAM policies scoped to project resources
 - ✅ **State Encryption**: AES256 encryption for all Terraform state
 - ✅ **Origin Access Control**: S3 buckets only accessible via CloudFront
+
+## 🏷️ AWS Resource Tagging Standard
+
+All AWS resources follow organizational tagging standards for cost tracking, resource management, and compliance.
+
+### Standard Tags (Applied to All Resources)
+
+| Tag Key | Tag Value | Purpose |
+|---------|-----------|---------|
+| `Environment` | `prod`, `staging`, `dev` | Environment identification |
+| `ManagedBy` | `terraform` or `bootstrap-script` | Management method |
+| `Owner` | `John Xanthopoulos` | Resource owner |
+| `Project` | `lawnsmartapp` | Project identifier |
+| `Service` | `lawnsmartapp-website` | Service name |
+| `GithubRepo` | `github.com/jxman/aws-hosting-lawnsmartapp` | Source repository |
+| `Site` | `lawnsmartapp.com` | Website domain |
+| `BaseProject` | `lawnsmartapp.com` | Base project domain |
+| `Name` | `<resource-specific>` | Resource name |
+| `SubService` | `<component-specific>` | Component identifier |
+
+### Resource-Specific SubService Tags
+
+| AWS Resource | SubService Value | Managed By |
+|--------------|------------------|------------|
+| **S3 Primary Bucket** | `primary-website-bucket` | `terraform` |
+| **S3 Failover Bucket** | `failover-website-bucket` | `terraform` |
+| **S3 Logs Bucket** | `access-logs-bucket` | `terraform` |
+| **CloudFront Distribution** | `cdn-distribution` | `terraform` |
+| **ACM Certificate** | `ssl-certificate` | `terraform` |
+| **IAM Replication Role** | `s3-replication-role` | `terraform` |
+| **IAM Replication Policy** | `s3-replication-policy` | `terraform` |
+| **OIDC Provider** | `github-oidc-provider` | `bootstrap-script` |
+| **GitHub Actions IAM Role** | `github-actions-role` | `bootstrap-script` |
+| **GitHub Actions IAM Policy** | `github-actions-policy` | `bootstrap-script` |
+
+### Tag Management by Resource Type
+
+#### Infrastructure Resources (Terraform-Managed)
+Resources managed by Terraform deployments have `ManagedBy = terraform`:
+- S3 buckets (website, logs, failover)
+- CloudFront distributions
+- ACM certificates
+- Route53 DNS records
+- IAM roles/policies for application infrastructure
+
+**To update tags**: Deploy via GitHub Actions workflow
+
+#### Authentication Resources (Bootstrap Script-Managed)
+OIDC authentication resources have `ManagedBy = bootstrap-script`:
+- OIDC Provider
+- GitHub Actions IAM Role
+- GitHub Actions IAM Policy
+
+**To update tags**: Run `bash scripts/bootstrap-oidc.sh`
+
+### Tag Benefits
+
+✅ **Cost Allocation**: Track spending by project, environment, and service
+✅ **Resource Discovery**: Filter and search resources by tags
+✅ **Compliance**: Meet organizational tagging requirements
+✅ **Operational Clarity**: Know how each resource is managed
+✅ **Automation**: Enable tag-based policies and automation
+
+### Querying Resources by Tags
+
+```bash
+# Find all resources for this project
+aws resourcegroupstaggingapi get-resources \
+  --tag-filters Key=Project,Values=lawnsmartapp
+
+# Find all production environment resources
+aws resourcegroupstaggingapi get-resources \
+  --tag-filters Key=Environment,Values=prod Key=Project,Values=lawnsmartapp
+
+# Find all Terraform-managed resources
+aws resourcegroupstaggingapi get-resources \
+  --tag-filters Key=ManagedBy,Values=terraform Key=Project,Values=lawnsmartapp
+
+# Find all bootstrap-managed resources
+aws resourcegroupstaggingapi get-resources \
+  --tag-filters Key=ManagedBy,Values=bootstrap-script
+```
 
 ## 📱 React SPA Configuration
 

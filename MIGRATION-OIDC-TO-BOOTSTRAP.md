@@ -166,7 +166,7 @@ aws iam list-policy-tags \
 
 **Verify all resources have these tags:**
 - `Environment = prod`
-- `ManagedBy = terraform`
+- `ManagedBy = bootstrap-script`
 - `Owner = John Xanthopoulos`
 - `Project = lawnsmartapp`
 - `Service = lawnsmartapp-website`
@@ -175,6 +175,8 @@ aws iam list-policy-tags \
 - `BaseProject = lawnsmartapp.com`
 - `Name = <resource-specific>`
 - `SubService = <github-oidc-provider | github-actions-role | github-actions-policy>`
+
+**Note:** OIDC resources have `ManagedBy = bootstrap-script` because they are managed by the `scripts/bootstrap-oidc.sh` script, not by Terraform. This semantic accuracy is important for operational clarity.
 
 ### Step 5: Test Terraform Plan
 
