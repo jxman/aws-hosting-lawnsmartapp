@@ -12,7 +12,7 @@ resource "aws_cloudfront_response_headers_policy" "security_headers" {
 
   security_headers_config {
     content_security_policy {
-      content_security_policy = "default-src 'self'; img-src 'self' data: blob:; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://www.googletagmanager.com; style-src 'self' 'unsafe-inline' data:; font-src 'self' data:; connect-src 'self' https://www.google-analytics.com https://analytics.google.com; frame-src 'self';"
+      content_security_policy = "default-src 'self'; img-src 'self' data: blob: https://m.media-amazon.com; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://www.googletagmanager.com; style-src 'self' 'unsafe-inline' data: https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; connect-src 'self' https://www.google-analytics.com https://analytics.google.com; frame-src 'self';"
       override                = true
     }
 
