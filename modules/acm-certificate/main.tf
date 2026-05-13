@@ -1,6 +1,6 @@
 resource "aws_acm_certificate" "cert" {
   domain_name               = var.site_name
-  subject_alternative_names = ["www.${var.site_name}"]
+  subject_alternative_names = ["www.${var.site_name}", "app.${var.site_name}"]
   validation_method         = "DNS"
   tags = merge(var.tags, {
     Name       = "${var.site_name}-certificate"

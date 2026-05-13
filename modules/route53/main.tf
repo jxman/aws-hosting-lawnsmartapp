@@ -16,6 +16,19 @@ resource "aws_route53_record" "root_site" {
   }
 }
 
+# Route53 record for app subdomain
+resource "aws_route53_record" "app_site" {
+  zone_id = data.aws_route53_zone.selected.zone_id
+  name    = "app.${var.site_name}"
+  type    = "A"
+
+  alias {
+    name                   = var.cloudfront_domain_name
+    zone_id                = var.cloudfront_hosted_zone_id
+    evaluate_target_health = false
+  }
+}
+
 # Route53 record for www subdomain
 resource "aws_route53_record" "www_site" {
   zone_id        = data.aws_route53_zone.selected.zone_id

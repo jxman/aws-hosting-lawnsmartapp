@@ -52,7 +52,7 @@ resource "aws_cloudfront_distribution" "website_cdn" {
   http_version        = "http2and3"
   is_ipv6_enabled     = true
   default_root_object = "index.html"
-  aliases             = ["www.${var.site_name}", var.site_name]
+  aliases             = ["www.${var.site_name}", var.site_name, "app.${var.site_name}"]
   tags = merge(var.tags, {
     Name       = "${var.site_name}-distribution"
     SubService = "cdn-distribution"
