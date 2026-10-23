@@ -1,6 +1,6 @@
 output "website_url" {
   description = "Website URL (domain name)"
-  value       = "https://${var.site_name}"
+  value       = "https://${local.actual_site_name}"
 }
 
 output "cloudfront_domain_name" {
