@@ -32,6 +32,25 @@ print_error() {
 # Configuration
 ENVIRONMENTS=("prod" "staging" "dev")
 REGION="us-east-1"
+BASE_DOMAIN="lawnsmartapp.com"
+
+# State bucket name for an environment (must match environments/<env>/backend.conf)
+state_bucket_name() {
+    if [ "$1" = "prod" ]; then
+        echo "lawnsmartapp-terraform-state"
+    else
+        echo "lawnsmartapp-terraform-state-$1"
+    fi
+}
+
+# Site domain for an environment
+site_domain() {
+    if [ "$1" = "prod" ]; then
+        echo "$BASE_DOMAIN"
+    else
+        echo "$1.$BASE_DOMAIN"
+    fi
+}
 
 # Function to check prerequisites
 check_prerequisites() {
@@ -64,7 +83,7 @@ check_prerequisites() {
 # Function to create S3 bucket for state
 create_s3_bucket() {
     local env=$1
-    local bucket_name="synepho-terraform-state-${env}"
+    local bucket_name=$(state_bucket_name "$env")
     
     print_status "Creating S3 bucket: $bucket_name"
     
@@ -103,6 +122,12 @@ create_s3_bucket() {
         --public-access-block-configuration \
         "BlockPublicAcls=true,IgnorePublicAcls=true,BlockPublicPolicy=true,RestrictPublicBuckets=true"
     
+    # Apply standard tags
+    print_status "Tagging $bucket_name"
+    aws s3api put-bucket-tagging \
+        --bucket "$bucket_name" \
+        --tagging "TagSet=[{Key=Environment,Value=$env},{Key=ManagedBy,Value=bootstrap-script},{Key=Owner,Value=John Xanthopoulos},{Key=Project,Value=lawnsmartapp},{Key=Service,Value=lawnsmartapp-website},{Key=GithubRepo,Value=github.com/jxman/aws-hosting-lawnsmartapp},{Key=Site,Value=$(site_domain "$env")},{Key=BaseProject,Value=$BASE_DOMAIN},{Key=Name,Value=$bucket_name},{Key=SubService,Value=terraform-state-bucket}]"
+    
     # Add lifecycle policy to manage costs
     print_status "Adding lifecycle policy to $bucket_name"
     aws s3api put-bucket-lifecycle-configuration \
@@ -135,7 +160,7 @@ create_s3_bucket() {
 # Function to verify created resources
 verify_resources() {
     local env=$1
-    local bucket_name="synepho-terraform-state-${env}"
+    local bucket_name=$(state_bucket_name "$env")
     print_status "Verifying resources for $env environment..."
     
     # Verify S3 bucket
@@ -156,7 +181,7 @@ show_resources() {
     
     for env in "${ENVIRONMENTS[@]}"; do
         echo "📁 $env Environment:"
-        echo "   S3 Bucket: synepho-terraform-state-${env}"
+        echo "   S3 Bucket: $(state_bucket_name "$env")"
         echo ""
     done
     
@@ -179,7 +204,7 @@ main() {
     # Confirmation
     print_warning "This script will create the following resources in AWS:"
     for env in "${ENVIRONMENTS[@]}"; do
-        echo "  • S3 bucket: synepho-terraform-state-${env}"
+        echo "  • S3 bucket: $(state_bucket_name "$env")"
     done
     echo ""
     

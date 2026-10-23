@@ -33,6 +33,12 @@ variable "environment" {
   default     = "prod"
 }
 
+variable "aws_application_arn" {
+  description = "myApplications resource group ARN applied as the awsApplication tag (empty to omit)"
+  type        = string
+  default     = ""
+}
+
 variable "github_repository" {
   description = "GitHub repository in format 'owner/repo'"
   type        = string
@@ -49,7 +55,7 @@ locals {
   # Consistent resource naming pattern
   resource_prefix = "${var.environment}-lawnsmartapp"
 
-  common_tags = {
+  common_tags = merge({
     Environment = var.environment
     ManagedBy   = "terraform"
     Owner       = "John Xanthopoulos"
@@ -58,5 +64,5 @@ locals {
     GithubRepo  = "github.com/jxman/aws-hosting-lawnsmartapp"
     Site        = local.actual_site_name
     BaseProject = var.base_domain
-  }
+  }, var.aws_application_arn != "" ? { awsApplication = var.aws_application_arn } : {})
 }
