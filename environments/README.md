@@ -42,7 +42,7 @@ gh run view [RUN_ID] --web
 Production uses dedicated state management:
 - **State Bucket**: `lawnsmartapp-terraform-state`
 - **State Key**: `lawnsmartapp-com/terraform.tfstate`
-- **Lock Table**: `terraform-locks`
+- **State Locking**: `use_lockfile = true` (S3 lockfile, no DynamoDB table)
 - **Region**: `us-east-1`
 - **Encryption**: `true`
 

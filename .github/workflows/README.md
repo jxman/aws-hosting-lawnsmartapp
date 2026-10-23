@@ -11,7 +11,7 @@ The Terraform deployment workflow provides secure, automated infrastructure depl
 ### 1. Production-Only Deployment
 - **Simplified Architecture**: Single production environment deployment
 - **Clean Resource Naming**: Uses `lawnsmartapp-*` naming convention
-- **Secure State Management**: Dedicated S3 bucket and DynamoDB table
+- **Secure State Management**: Dedicated S3 bucket with S3 lockfile locking (`use_lockfile`)
 
 ### 2. OIDC Authentication
 - **No Stored Credentials**: Uses AWS OIDC web identity federation
@@ -19,7 +19,7 @@ The Terraform deployment workflow provides secure, automated infrastructure depl
 - **Least Privilege**: IAM permissions scoped to required resources only
 
 ### 3. Automated Infrastructure Management
-- **State Infrastructure**: Creates S3 bucket and DynamoDB table automatically
+- **State Infrastructure**: Creates the S3 state bucket automatically
 - **Format Validation**: Checks Terraform code formatting
 - **Plan Review**: Generates and validates infrastructure changes
 - **Automatic Application**: Applies changes on main branch pushes
@@ -36,7 +36,7 @@ env:
 The workflow creates and manages:
 - **S3 Bucket**: `lawnsmartapp-terraform-state`
 - **State Key**: `lawnsmartapp-com/terraform.tfstate`
-- **DynamoDB Table**: `terraform-locks`
+- **State Locking**: S3 lockfile (`lawnsmartapp-com/terraform.tfstate.tflock`)
 - **Domain**: `lawnsmartapp.com`
 
 ### Backend Configuration
@@ -66,9 +66,9 @@ gh workflow run "Terraform Deployment" --ref main -f action=apply
 ## Deployment Process
 
 ### Workflow Steps
-1. **Setup**: Checkout code, setup Terraform 1.7.0, configure AWS OIDC credentials
+1. **Setup**: Checkout code, setup Terraform 1.15.5, configure AWS OIDC credentials
 2. **State Verification**: Check existing state file location and list all state files
-3. **Infrastructure**: Create/verify S3 state bucket and DynamoDB lock table
+3. **Infrastructure**: Create/verify the S3 state bucket
 4. **Validation**: Format check, init with production backend, validate configuration
 5. **Planning**: Generate plan with production variables, upload artifacts for PRs
 6. **Deployment**: Apply changes (on main branch or manual apply)
@@ -78,7 +78,7 @@ gh workflow run "Terraform Deployment" --ref main -f action=apply
 - ✅ **OIDC Authentication**: `arn:aws:iam::600424110307:role/GithubActionsOIDC-LawnSmartApp-Role`
 - ✅ **Repository Isolation**: Trust policy restricted to `jxman/aws-hosting-lawnsmartapp`
 - ✅ **Encrypted State**: S3 state bucket with AES256 encryption
-- ✅ **State Locking**: DynamoDB prevents concurrent modifications
+- ✅ **State Locking**: S3 lockfile (`use_lockfile`) prevents concurrent modifications
 - ✅ **Least Privilege**: IAM permissions limited to required resources
 
 ## Production Resources
@@ -171,9 +171,9 @@ Error: Could not assume role with OIDC
 ```
 Error: Error acquiring the state lock
 ```
-**Solution**: Check DynamoDB table status and clear locks if needed:
+**Solution**: Another plan/apply holds the `.tflock` object next to the state file in S3; wait for it to finish. If a crashed run left a stale lock, release it:
 ```bash
-aws dynamodb scan --table-name terraform-locks
+aws s3 ls s3://lawnsmartapp-terraform-state/lawnsmartapp-com/
 terraform force-unlock [LOCK_ID]
 ```
 

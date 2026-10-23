@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Script to create prerequisite infrastructure for Terraform state management
-# This creates S3 buckets and DynamoDB tables for all environments
+# This creates S3 state buckets for all environments (locking uses S3 lockfiles)
 
 set -e  # Exit on any error
 
@@ -132,43 +132,10 @@ create_s3_bucket() {
     print_success "S3 bucket $bucket_name created and configured successfully!"
 }
 
-# Function to create DynamoDB table for locking
-create_dynamodb_table() {
-    local env=$1
-    local table_name="terraform-locks-${env}"
-    
-    print_status "Creating DynamoDB table: $table_name"
-    
-    # Check if table already exists
-    if aws dynamodb describe-table --table-name "$table_name" --region "$REGION" 2>/dev/null; then
-        print_warning "DynamoDB table $table_name already exists, skipping creation"
-        return 0
-    fi
-    
-    # Create table
-    aws dynamodb create-table \
-        --table-name "$table_name" \
-        --attribute-definitions AttributeName=LockID,AttributeType=S \
-        --key-schema AttributeName=LockID,KeyType=HASH \
-        --provisioned-throughput ReadCapacityUnits=5,WriteCapacityUnits=5 \
-        --region "$REGION" \
-        --tags Key=Environment,Value="$env" \
-               Key=Purpose,Value="TerraformStateLocking" \
-               Key=ManagedBy,Value="terraform-prerequisites-script"
-    
-    # Wait for table to be active
-    print_status "Waiting for DynamoDB table $table_name to be active..."
-    aws dynamodb wait table-exists --table-name "$table_name" --region "$REGION"
-    
-    print_success "DynamoDB table $table_name created successfully!"
-}
-
 # Function to verify created resources
 verify_resources() {
     local env=$1
     local bucket_name="synepho-terraform-state-${env}"
-    local table_name="terraform-locks-${env}"
-    
     print_status "Verifying resources for $env environment..."
     
     # Verify S3 bucket
@@ -176,14 +143,6 @@ verify_resources() {
         print_success "✓ S3 bucket $bucket_name exists and is accessible"
     else
         print_error "✗ S3 bucket $bucket_name verification failed"
-        return 1
-    fi
-    
-    # Verify DynamoDB table
-    if aws dynamodb describe-table --table-name "$table_name" --region "$REGION" 2>/dev/null >/dev/null; then
-        print_success "✓ DynamoDB table $table_name exists and is accessible"
-    else
-        print_error "✗ DynamoDB table $table_name verification failed"
         return 1
     fi
     
@@ -198,7 +157,6 @@ show_resources() {
     for env in "${ENVIRONMENTS[@]}"; do
         echo "📁 $env Environment:"
         echo "   S3 Bucket: synepho-terraform-state-${env}"
-        echo "   DynamoDB Table: terraform-locks-${env}"
         echo ""
     done
     
@@ -222,7 +180,6 @@ main() {
     print_warning "This script will create the following resources in AWS:"
     for env in "${ENVIRONMENTS[@]}"; do
         echo "  • S3 bucket: synepho-terraform-state-${env}"
-        echo "  • DynamoDB table: terraform-locks-${env}"
     done
     echo ""
     
@@ -240,7 +197,6 @@ main() {
     for env in "${ENVIRONMENTS[@]}"; do
         echo "🔧 Setting up $env environment:"
         create_s3_bucket "$env"
-        create_dynamodb_table "$env"
         verify_resources "$env"
         echo ""
     done

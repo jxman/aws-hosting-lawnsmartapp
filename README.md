@@ -405,8 +405,8 @@ curl -I https://www.lawnsmartapp.com
 
 **State Lock Issues:**
 ```bash
-# Check lock status
-aws dynamodb scan --table-name terraform-locks
+# Check for a lock file next to the state file
+aws s3 ls s3://lawnsmartapp-terraform-state/lawnsmartapp-com/
 
 # Force unlock (use with caution)
 terraform force-unlock <LOCK_ID>
