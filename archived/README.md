@@ -19,15 +19,19 @@ The files in `local-deployment-scripts/` were used for local Terraform deploymen
 - `deploy-prod.sh` - Production deployment script
 - `deploy-dev.sh` - Development deployment script  
 - `deploy-staging.sh` - Staging deployment script
-- `deploy.sh` - Generic deployment script
+- `deploy.sh` - Generic deployment script (it read `backend-configs/`, which has since been removed, so it no longer runs as-is)
+
+## Terraform Modules (Retired)
+
+- `terraform-modules/github-oidc/` - The OIDC provider, role and policy module. Retired on 2025-11-16 when OIDC moved to `scripts/bootstrap-oidc.sh`; see [docs/oidc-bootstrap-migration.md](../docs/oidc-bootstrap-migration.md)
 
 ## Current Deployment Method
 
 **Use GitHub Actions workflows only:**
 
 ```bash
-# Deploy to production
-gh workflow run "Terraform Deployment" --ref main
+# A push to main plans and applies. To apply manually:
+gh workflow run "Terraform Deployment" --ref main -f action=apply
 
 # Monitor deployment
 gh run list --limit 5

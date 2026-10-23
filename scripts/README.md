@@ -1,10 +1,38 @@
-# AWS Architecture Diagram Automation Scripts
+# Scripts
 
-**🔐 Security Policy: Local deployment scripts have been deprecated. All infrastructure deployments now use GitHub Actions with OIDC authentication.**
+| Script | Purpose |
+|---|---|
+| `bootstrap-oidc.sh` | Creates or updates the GitHub Actions OIDC provider, IAM role and IAM policy |
+| `create-prerequisites.sh` | Creates tagged, versioned, encrypted Terraform state buckets for prod, staging and dev |
+| `generate-architecture-diagram.sh` | Generates an SVG architecture diagram with AWS icons using Claude Code |
+| `claude-automation.sh` | Claude Code prompt handling for the diagram generator |
+| `asset-manager.sh` | Downloads and manages the AWS Architecture Icons |
+| `claude-prompts/` | Prompts used by the diagram generator |
 
-This directory contains automation scripts for generating professional AWS architecture diagrams from Terraform projects using Claude Code.
+None of these deploy infrastructure. Deployments run only in GitHub Actions; see [docs/deployment-guide.md](../docs/deployment-guide.md).
+
+## OIDC Bootstrap
+
+```bash
+bash scripts/bootstrap-oidc.sh
+```
+
+- Idempotent: creates `token.actions.githubusercontent.com`, `GithubActions-LawnSmartApp-Policy` and `GithubActionsOIDC-LawnSmartApp-Role` if they are missing, otherwise updates their tags and policy document
+- The role's trust policy only accepts tokens from `repo:jxman/aws-hosting-lawnsmartapp:*`
+- Resources are tagged `ManagedBy = bootstrap-script`
+- When you change the role's permissions, update the live policy **and** this script in the same commit
+
+## State Prerequisites
+
+```bash
+bash scripts/create-prerequisites.sh
+```
+
+Creates `lawnsmartapp-terraform-state` (prod), `lawnsmartapp-terraform-state-staging` and `lawnsmartapp-terraform-state-dev` if they don't exist, with versioning, AES256 encryption, public access blocked, a lifecycle policy and the 10 standard tags. Locking uses S3 lockfiles, so no DynamoDB table is created. It asks for confirmation before creating anything.
 
 ## Architecture Diagram Generation
+
+These scripts generate an SVG diagram with official AWS icons. The README's own diagrams are Mermaid and don't depend on them.
 
 ### Prerequisites
 
@@ -58,9 +86,6 @@ cp .diagram-config.json /path/to/your/new/project/
 cd /path/to/your/new/project
 
 # Generate architecture diagram for production environment
-./scripts/generate-architecture-diagram.sh -a ~/.aws-architecture-icons -e prod
-
-# Generate for production environment
 ./scripts/generate-architecture-diagram.sh -a ~/.aws-architecture-icons -e prod
 ```
 
@@ -178,99 +203,3 @@ Example customization:
   "default_environment": "prod"
 }
 ```
-
-## Deprecated: Local Deployment Scripts
-
-**⚠️ DEPRECATED: Local deployment scripts have been archived and are no longer supported.**
-
-### Current Deployment Method (GitHub Actions)
-
-All infrastructure deployments now use GitHub Actions with OIDC authentication:
-
-```bash
-# Deploy infrastructure changes
-gh workflow run "Terraform Deployment" --ref main
-
-# Monitor deployment status
-gh run list --limit 5
-gh run view [RUN_ID] --web
-```
-
-### Why GitHub Actions?
-
-- ✅ **OIDC Authentication**: Secure AWS access without stored credentials
-- ✅ **Audit Trail**: Complete deployment history and logging
-- ✅ **Consistency**: Standardized deployment environment
-- ✅ **Team Visibility**: All deployments tracked and visible
-- ✅ **Best Practices**: Infrastructure deployed through CI/CD
-
-### Archived Scripts Location
-
-Previous local deployment scripts have been moved to:
-- **Location**: `../archived/local-deployment-scripts/`
-- **Status**: DEPRECATED - Use GitHub Actions instead
-- **Documentation**: See `../archived/README.md`
-
-## Local Development Commands
-
-For local development and testing (read-only operations only):
-
-```bash
-# Format and validate Terraform
-terraform fmt -recursive
-terraform validate
-
-# Preview changes (requires AWS credentials)
-terraform plan
-
-# Check syntax and formatting
-terraform fmt -check -recursive
-```
-
-## Security Considerations
-
-### GitHub Actions Security (Current)
-- 🔐 **OIDC Authentication**: No stored AWS credentials
-- 🔐 **Repository Isolation**: IAM trust policy restricted to specific repository
-- 🔐 **Least Privilege**: IAM permissions scoped to required resources
-- 🔐 **Audit Trail**: All deployments logged in GitHub Actions and CloudTrail
-
-### Deprecated Local Scripts (Archived)
-- ⚠️ **Security Risk**: Required local AWS credentials
-- ⚠️ **No Audit Trail**: Local deployments not centrally logged
-- ⚠️ **Inconsistent Environment**: Different deployment environments across team
-- ⚠️ **No Team Visibility**: Deployments not visible to team members
-
-## Integration with GitHub Actions
-
-The current GitHub Actions workflow provides:
-
-```yaml
-# Example GitHub Actions usage (automated)
-name: Terraform Deployment
-on:
-  push:
-    branches: [main]
-  workflow_dispatch:
-
-jobs:
-  terraform:
-    runs-on: ubuntu-latest
-    permissions:
-      id-token: write
-      contents: read
-    steps:
-      - uses: actions/checkout@v4
-      - name: Configure AWS Credentials
-        uses: aws-actions/configure-aws-credentials@v4
-        with:
-          role-to-assume: arn:aws:iam::ACCOUNT:role/GithubActionsOIDC-LawnSmartApp-Role
-          aws-region: us-east-1
-      - name: Deploy Infrastructure
-        run: |
-          terraform init
-          terraform plan
-          terraform apply -auto-approve
-```
-
-For more details, see the [DEPLOYMENT_GUIDE.md](../DEPLOYMENT_GUIDE.md).

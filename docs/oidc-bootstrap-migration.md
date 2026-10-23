@@ -2,11 +2,16 @@
 
 ## Overview
 
+> **Status: completed 2025-11-16.** The OIDC provider, role and policy are now
+> managed by `scripts/bootstrap-oidc.sh`. This runbook is kept for reference,
+> mainly for the [rollback plan](#rollback-plan), which shows how to bring the
+> resources back under Terraform. The summary is in the
+> [changelog](../CHANGELOG.md#oidc-terraform-module-to-bootstrap-script).
+
 This document provides step-by-step instructions for migrating GitHub Actions OIDC resources from Terraform management to bootstrap script management.
 
-**Date:** 2025-01-16
 **Project:** aws-hosting-lawnsmartapp
-**Purpose:** Align OIDC management with organizational standard (matching synepho-s3cf-site pattern)
+**Purpose:** Align OIDC management with the standard used by other projects (matching the synepho-s3cf-site pattern)
 
 ---
 
@@ -59,8 +64,6 @@ All three commands should return results. **Document the ARNs for reference.**
 **CRITICAL:** This removes resources from Terraform state **WITHOUT deleting them from AWS**.
 
 ```bash
-cd /Users/johxan/Documents/my-projects/lawnsmart-app/aws-hosting-lawnsmartapp
-
 # Initialize Terraform
 terraform init
 
@@ -212,8 +215,8 @@ gh run watch
 git add scripts/bootstrap-oidc.sh
 git add main.tf
 git add archived/terraform-modules/github-oidc/
-git add MIGRATION-OIDC-TO-BOOTSTRAP.md
-git add DEPLOYMENT_GUIDE.md
+git add docs/oidc-bootstrap-migration.md
+git add docs/deployment-guide.md
 git add CLAUDE.md
 
 # Commit
@@ -234,7 +237,7 @@ Benefits:
 - Simplified Terraform state management
 - Idempotent bootstrap script for easy setup
 
-Migration completed following MIGRATION-OIDC-TO-BOOTSTRAP.md instructions.
+Migration completed following docs/oidc-bootstrap-migration.md instructions.
 
 🤖 Generated with [Claude Code](https://claude.com/claude-code)
 
@@ -281,7 +284,7 @@ After migration, verify:
 - [ ] OIDC resources exist in AWS with correct tags
 - [ ] Terraform state does NOT include OIDC resources
 - [ ] GitHub Actions workflows deploy successfully
-- [ ] Documentation updated (DEPLOYMENT_GUIDE.md, CLAUDE.md)
+- [ ] Documentation updated (docs/deployment-guide.md, CLAUDE.md)
 - [ ] Team members aware of new OIDC management process
 
 ---
@@ -318,5 +321,4 @@ If you encounter issues during migration:
 ---
 
 **Migration Author:** Claude Code
-**Date:** 2025-01-16
-**Status:** Ready for execution
+**Completed:** 2025-11-16

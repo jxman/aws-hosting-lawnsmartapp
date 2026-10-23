@@ -16,7 +16,7 @@ The Terraform deployment workflow provides secure, automated infrastructure depl
 ### 2. OIDC Authentication
 - **No Stored Credentials**: Uses AWS OIDC web identity federation
 - **Repository Isolation**: IAM role restricted to this specific repository
-- **Least Privilege**: IAM permissions scoped to required resources only
+- **Permissions**: only IAM and DynamoDB statements are scoped to project resources; S3, CloudFront, Route53 and ACM are account-wide
 
 ### 3. Automated Infrastructure Management
 - **State Infrastructure**: Creates the S3 state bucket automatically
@@ -56,10 +56,10 @@ terraform plan -var-file=environments/prod/terraform.tfvars
 
 ### Manual Triggers
 ```bash
-# Manual deployment trigger
+# Manual run: plan only (action defaults to plan)
 gh workflow run "Terraform Deployment" --ref main
 
-# Manual deployment with apply
+# Manual run: plan and apply
 gh workflow run "Terraform Deployment" --ref main -f action=apply
 ```
 
@@ -79,7 +79,7 @@ gh workflow run "Terraform Deployment" --ref main -f action=apply
 - ✅ **Repository Isolation**: Trust policy restricted to `jxman/aws-hosting-lawnsmartapp`
 - ✅ **Encrypted State**: S3 state bucket with AES256 encryption
 - ✅ **State Locking**: S3 lockfile (`use_lockfile`) prevents concurrent modifications
-- ✅ **Least Privilege**: IAM permissions limited to required resources
+- ⚠️ **Least Privilege**: partial; only IAM and DynamoDB statements are scoped to project resources; S3, CloudFront, Route53 and ACM are account-wide
 
 ## Production Resources
 
@@ -92,7 +92,7 @@ gh workflow run "Terraform Deployment" --ref main -f action=apply
 | **S3 Failover** | prod-lawnsmartapp-secondary | Cross-region backup |
 | **S3 Logs** | prod-lawnsmartapp-site-logs | Access logging |
 | **Route53 Zone** | Z04860973DG1BJ5J1VVBE | DNS management |
-| **ACM Certificate** | 08e59308-3109-4531-9895-c4d77ba3636c | SSL/TLS |
+| **ACM Certificate** | 081bc4fc-8e84-4e23-886a-6347bc041d6c | SSL/TLS (apex, www, app) |
 
 ### IAM Resources
 - **OIDC Role**: `GithubActionsOIDC-LawnSmartApp-Role`
@@ -223,7 +223,7 @@ aws route53 list-resource-record-sets --hosted-zone-id Z04860973DG1BJ5J1VVBE
 git checkout [WORKING_COMMIT_HASH]
 git checkout -b emergency-rollback
 git push origin emergency-rollback
-gh workflow run "Terraform Deployment" --ref emergency-rollback
+gh workflow run "Terraform Deployment" --ref emergency-rollback -f action=apply
 
 # Method 2: Re-run previous successful deployment
 gh run list --status completed --limit 5
@@ -238,8 +238,8 @@ gh run rerun [SUCCESSFUL_RUN_ID]
 - ✅ **Deployment Method**: GitHub Actions with OIDC authentication
 - ✅ **Environment**: Production-only deployment
 - ✅ **Domain**: lawnsmartapp.com (active and resolving)
-- ✅ **Security**: Repository-isolated IAM role with least privilege
-- ✅ **Documentation**: Comprehensive deployment guide available
+- ✅ **Security**: Repository-isolated IAM role (permissions not yet fully scoped)
+- ✅ **Documentation**: See [docs/deployment-guide.md](../../docs/deployment-guide.md)
 
 ---
 

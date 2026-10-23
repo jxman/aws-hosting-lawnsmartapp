@@ -1,17 +1,23 @@
-# Production Environment Configuration
+# Environment Configuration
 
 **🔐 Security Policy: This project now uses GitHub Actions for all deployments. Local deployment scripts have been deprecated and archived.**
 
-This directory contains the production environment configuration for the LawnSmart App AWS hosting infrastructure.
+This directory holds the backend and variable files for each environment. CI uses only `prod`; `dev` and `staging` are for manual plans.
 
 ## Current Structure
 
 ```
 environments/
-├── prod/
-│   ├── backend.conf      # Production backend configuration
-│   └── terraform.tfvars  # Production variables
-└── README.md            # This file
+├── prod/                 # Used by CI
+│   ├── backend.conf      # State bucket lawnsmartapp-terraform-state
+│   └── terraform.tfvars  # Production variables (incl. aws_application_arn)
+├── dev/                  # Manual only; dev.lawnsmartapp.com
+│   ├── backend.conf
+│   └── terraform.tfvars
+├── staging/              # Manual only; state bucket not created yet
+│   ├── backend.conf
+│   └── terraform.tfvars
+└── README.md             # This file
 ```
 
 ## Deployment Method
@@ -19,8 +25,8 @@ environments/
 **🚀 All deployments MUST use GitHub Actions workflows:**
 
 ```bash
-# Deploy infrastructure changes
-gh workflow run "Terraform Deployment" --ref main
+# A push to main plans and applies. To apply manually:
+gh workflow run "Terraform Deployment" --ref main -f action=apply
 
 # Monitor deployment status
 gh run list --limit 5
@@ -62,17 +68,23 @@ For local development and testing only:
 # Format and validate (no deployment)
 terraform fmt -recursive
 terraform validate
-terraform plan  # Requires AWS credentials for read-only preview
+terraform init -backend-config=environments/prod/backend.conf -reconfigure
+terraform plan -var-file=environments/prod/terraform.tfvars  # read-only preview
 ```
 
-## Archived Multi-Environment Setup
+## Dev and Staging
 
-Previous multi-environment configurations (dev/staging) have been simplified to production-only deployment. For information about the archived local deployment scripts, see `archived/README.md`.
+| Environment | Site | State bucket | Status |
+|---|---|---|---|
+| dev | `dev.lawnsmartapp.com` | `lawnsmartapp-terraform-state-dev` | Bucket exists; not deployed by CI |
+| staging | `staging.lawnsmartapp.com` | `lawnsmartapp-terraform-state-staging` | Bucket not created |
+
+Create missing state buckets with `scripts/create-prerequisites.sh`. The local deployment scripts that used to target these environments are archived; see `archived/README.md`.
 
 ## Security Features
 
 - ✅ **OIDC Authentication**: GitHub Actions uses AWS OIDC, no stored credentials
 - ✅ **Repository Isolation**: IAM trust policy restricted to this specific repository
-- ✅ **Least Privilege**: IAM permissions scoped to required resources only
+- ⚠️ **Least Privilege**: partial; only IAM and DynamoDB statements are scoped to project resources; S3, CloudFront, Route53 and ACM are account-wide
 - ✅ **Audit Trail**: All deployments logged via GitHub Actions and CloudTrail
 - ✅ **Encrypted State**: Terraform state encrypted at rest in S3
